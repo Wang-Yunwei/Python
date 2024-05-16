@@ -1,0 +1,23 @@
+from PIL import Image, ImageEnhance
+
+# 打开图像
+image = Image.open('example_image.jpg')
+
+# 增强亮度
+enhancer = ImageEnhance.Brightness(image)
+bright_image = enhancer.enhance(1.5)  # 参数大于1表示增强，小于1表示减弱
+
+# 增强对比度
+enhancer = ImageEnhance.Contrast(bright_image)
+contrast_image = enhancer.enhance(1.5)
+
+# 显示原始图像和增强后的图像
+plt.subplot(1, 2, 1)
+plt.imshow(image)
+plt.title('Original Image')
+plt.axis('off')
+plt.subplot(1, 2, 2)
+plt.imshow(contrast_image)
+plt.title('Enhanced Image')
+plt.axis('off')
+plt.show()
