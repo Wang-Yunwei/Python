@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>机库MQTT服务配置信息</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./static/css/style.css">
+    <script src="./static/js/jquery.min.js"></script>
+    <script src="./static/js/popper.min.js"></script>
+    <script src="./static/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+<div class="container mt-3">
+    <div class="h3">
+        <img src="./static/img/icon.jpg" width="24">
+        机库MQTT服务配置
+    </div>
+    <div class="tips">
+        <p align="center">请根据当前机库MQTT使用场景进行配置</p>
+    </div>
+
+    <form action="/save_mqtt_config" method="post">
+        <div class="input-group mb-3">
+            <div class="h4">是否读启动MQTT服务(修改后需要重启上位机生效)</div>
+            {% if is_run_mqtt %}
+                <select name="is_run_mqtt" class="form-control">
+                    <option selected="selected" value="True">启动服务</option>
+                    <option value="False">禁用服务</option>
+                </select>
+            {% else %}
+                <select name="is_run_mqtt" class="form-control">
+                    <option value="True">启动服务</option>
+                    <option selected="selected" value="False">禁用服务</option>
+                </select>
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">MQTT接口类型</div>
+            {% if mqtt_type=="dianxin" %}
+                <select name="mqtt_type" class="form-control">
+                    <option selected="selected" value="dianxin">电信定制版</option>
+                    <option value="selfmqtt">自有协议</option>
+                </select>
+            {% else %}
+                <select name="mqtt_type" class="form-control">
+                    <option value="dianxin">电信定制版(此处MQTT配置不再生效)</option>
+                    <option selected="selected" value="selfmqtt">自有协议</option>
+                </select>
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">MQTT服务IP地址或服务地址</div>
+            {% if host_str %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务IP地址或服务地址" id="host_str" name="host_str"
+                       value="{{ host_str }}">
+            {% else %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务IP地址或服务地址" id="host_str" name="host_str">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">MQTT服务端口号</div>
+            {% if port_int %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务端口号X" id="port_int" name="port_int"
+                       value="{{ port_int }}">
+            {% else %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务端口号" id="port_int" name="port_int">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">MQTT服务登录账户名</div>
+            {% if username_str %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务登录账户名" id="username_str"
+                       name="username_str"
+                       value="{{ username_str }}">
+            {% else %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务登录账户名" id="username_str"
+                       name="username_str">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">MQTT服务登录账户密码</div>
+            {% if password_str %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务登录账户密码" id="password_str"
+                       name="password_str"
+                       value="{{ password_str }}">
+            {% else %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务登录账户密码" id="password_str"
+                       name="password_str">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">MQTT服务客户端ID</div>
+            {% if client_id %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务客户端ID" id="client_id" name="client_id"
+                       value="{{ client_id }}">
+            {% else %}
+                <input type="text" class="form-control" placeholder="请输入MQTT服务客户端ID" id="client_id" name="client_id">
+            {% endif %}
+        </div>
+
+        <div style="text-align:center">
+            <button type="submit" class="btn btn-primary">保存MQTT服务配置</button>
+        </div>
+    </form>
+</div>
+
+
+</body>
+
+</html>

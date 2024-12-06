@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="utf-8"?>
+<versionInfo>
+	<ServerInfo>
+		<ServerIp>h410k08533.qicp.vip</ServerIp>
+		<ServerPort>59116</ServerPort>
+		<XmlLocalPath>default</XmlLocalPath>
+	</ServerInfo>
+	<ClientVersion Version="1">
+		<object>
+			<FileRelativePath>ClientVersion/client.py</FileRelativePath>
+			<FileSize>17717</FileSize>
+			<LastUpdateTime>2022-08-07 21:16:02</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/ConfigIni.py</FileRelativePath>
+			<FileSize>7083</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/JoystickController.py</FileRelativePath>
+			<FileSize>1196</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/out.log</FileRelativePath>
+			<FileSize>0</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/README.md</FileRelativePath>
+			<FileSize>396</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/readme.txt</FileRelativePath>
+			<FileSize>14</FileSize>
+			<LastUpdateTime>2022-08-07 21:18:56</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/startservice.py</FileRelativePath>
+			<FileSize>67751</FileSize>
+			<LastUpdateTime>2022-08-07 23:26:32</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/StateFlag.py</FileRelativePath>
+			<FileSize>1696</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/TestCom.py</FileRelativePath>
+			<FileSize>2475</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/AutoCharge/AutoChargeControl.py</FileRelativePath>
+			<FileSize>12109</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/AutoCharge/AutoChargeControlV1.py</FileRelativePath>
+			<FileSize>12831</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/AutoCharge/__init__.py</FileRelativePath>
+			<FileSize>100</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/BASEUtile/Config.py</FileRelativePath>
+			<FileSize>17758</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/BASEUtile/HangerState.py</FileRelativePath>
+			<FileSize>9377</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/BASEUtile/JK.db</FileRelativePath>
+			<FileSize>16384</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/BASEUtile/logger.py</FileRelativePath>
+			<FileSize>3359</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/BASEUtile/MINIO.py</FileRelativePath>
+			<FileSize>7394</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/BASEUtile/ResultCodeDict.py</FileRelativePath>
+			<FileSize>10659</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/BASEUtile/__init__.py</FileRelativePath>
+			<FileSize>0</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/DBBackup/M300/JK.db</FileRelativePath>
+			<FileSize>24576</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/DBBackup/M300/readme.md</FileRelativePath>
+			<FileSize>51</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/GPS/GPSCompute.py</FileRelativePath>
+			<FileSize>4343</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/GPS/__init__.py</FileRelativePath>
+			<FileSize>97</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/JKController/JKBarServer.py</FileRelativePath>
+			<FileSize>7928</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/JKController/JKControllerServer.py</FileRelativePath>
+			<FileSize>9663</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/JKController/JKDoorServer.py</FileRelativePath>
+			<FileSize>6171</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/JKController/__init__.py</FileRelativePath>
+			<FileSize>0</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/SATA/SATACom.py</FileRelativePath>
+			<FileSize>21689</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/SATA/SerialHelp.py</FileRelativePath>
+			<FileSize>2642</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/SATA/SerialUtils.py</FileRelativePath>
+			<FileSize>2808</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/SATA/__init__.py</FileRelativePath>
+			<FileSize>0</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/ServerManager/websockets.py</FileRelativePath>
+			<FileSize>76133</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/ServerManager/websocketsV1.py</FileRelativePath>
+			<FileSize>20371</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/ServerManager/__init__.py</FileRelativePath>
+			<FileSize>0</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/static/css/bootstrap.min.css</FileRelativePath>
+			<FileSize>155764</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/static/css/style.css</FileRelativePath>
+			<FileSize>2672</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/static/img/icon.jpg</FileRelativePath>
+			<FileSize>1605</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/static/js/bootstrap.min.js</FileRelativePath>
+			<FileSize>58078</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/static/js/jquery.min.js</FileRelativePath>
+			<FileSize>86661</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/static/js/popper.min.js</FileRelativePath>
+			<FileSize>21165</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/templates/config.html</FileRelativePath>
+			<FileSize>7829</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/templates/index.html</FileRelativePath>
+			<FileSize>2870</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/templates/logconfig.html</FileRelativePath>
+			<FileSize>2040</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/templates/testpage.html</FileRelativePath>
+			<FileSize>11214</FileSize>
+			<LastUpdateTime>2022-08-07 22:30:58</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/templates/updatesoft.html</FileRelativePath>
+			<FileSize>1495</FileSize>
+			<LastUpdateTime>2022-08-07 21:53:50</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/UPS/UPSCompute.py</FileRelativePath>
+			<FileSize>4186</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/UPS/__init__.py</FileRelativePath>
+			<FileSize>98</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/USBDevice/USBDeviceConfig.py</FileRelativePath>
+			<FileSize>5077</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/USBDevice/__init__.py</FileRelativePath>
+			<FileSize>100</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/weather/test.py</FileRelativePath>
+			<FileSize>882</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/weather/weather.py</FileRelativePath>
+			<FileSize>6123</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/weather/WeatherCompute.py</FileRelativePath>
+			<FileSize>15527</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/weather/WeatherComputeV1.py</FileRelativePath>
+			<FileSize>14916</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/weather/__init__.py</FileRelativePath>
+			<FileSize>98</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/CheckState.py</FileRelativePath>
+			<FileSize>1155</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/CheckStateWFCV2.py</FileRelativePath>
+			<FileSize>1139</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/JCCListerner.py</FileRelativePath>
+			<FileSize>8566</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/JCCServer.py</FileRelativePath>
+			<FileSize>13498</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/JCCServerSend.py</FileRelativePath>
+			<FileSize>8333</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/WFCServer.py</FileRelativePath>
+			<FileSize>9746</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/WFCServerV2.py</FileRelativePath>
+			<FileSize>10028</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/WFCServerV2Sender.py</FileRelativePath>
+			<FileSize>5792</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/WFCV2Listerner.py</FileRelativePath>
+			<FileSize>7752</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/WFState.py</FileRelativePath>
+			<FileSize>1441</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>ClientVersion/WFCharge/__init__.py</FileRelativePath>
+			<FileSize>97</FileSize>
+			<LastUpdateTime>2022-08-07 21:14:59</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+	</ClientVersion>
+	<Scripts Version="1">
+		<object>
+			<FileRelativePath>Scripts/abc</FileRelativePath>
+			<FileSize>3</FileSize>
+			<LastUpdateTime>2022-05-16 20:58:14</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+		<object>
+			<FileRelativePath>Scripts/client_entry.py</FileRelativePath>
+			<FileSize>41</FileSize>
+			<LastUpdateTime>2022-05-16 20:58:33</LastUpdateTime>
+			<Version>1</Version>
+		</object>
+	</Scripts>
+</versionInfo>

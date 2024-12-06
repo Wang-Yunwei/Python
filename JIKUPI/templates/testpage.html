@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>机库测试操作</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./static/css/style.css">
+  <script src="./static/js/jquery.min.js"></script>
+  <script src="./static/js/popper.min.js"></script>
+  <script src="./static/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+  <div class="container mt-3">
+    <div class="h3">
+      <img src="./static/img/icon.jpg" width="24">
+      机库当前状态
+    </div>
+    <div class="row label">
+      <div class=".col-xs-6 .col-sm-3">
+        <div id="doorshow" class="label-item">
+          <div class="label label-primary">机库门：<span>{{hanger_door}}</span></div>
+        </div>
+      </div>
+      <div class=".col-xs-6 .col-sm-3">
+        <div id="barshow" class="label-item">
+          <div class="label label-primary">机库推杆：<span>{{hanger_bar}}</span></div>
+        </div>
+      </div>
+      <div class=".col-xs-6 .col-sm-3">
+        <div id="airconshow" class="label-item">
+          <div class="label label-primary">空调：<span>{{hanger_air}}</span></div>
+        </div>
+      </div>
+      <div class=".col-xs-6 .col-sm-3">
+        <div id="uavcontrollershow" class="label-item">
+          <div class="label label-primary">遥控器：<span>{{hanger_uav}}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="operatordiv" class="container mt-3">
+    <div class="h3">
+      <img src="./static/img/icon.jpg" width="24">
+      机库操作
+    </div>
+    <div id="door" class="group">
+      <div class="h5">机库门操作</div>
+      <form action="/opendoor" method="post">
+        <label>机库开门</label>
+        <input type="text" class="form-control" placeholder="开门命令" id="opendoorcomm" name="opendoorcomm" value="{{opendoor}}"> <button type="submit" class="btn btn-primary">开门</button>
+      </form>
+      <form action="/closedoor" method="post">
+        <label>机库关门</label>
+        <input type="text" class="form-control" placeholder="关门命令" id="closedoorcomm" name="closedoorcomm" value="{{closedoor}}"> <button type="submit" class="btn btn-primary">关门</button>
+      </form>
+    </div>
+    <div id="bar" class="group">
+      <div class="h5">机库推杆操作</div>
+
+      <div class="group-con">
+        <div class="con-left">
+          <form action="/openbar" method="post">
+            <label>机库推杆打开</label>
+            <input type="text" class="form-control" placeholder="打开命令" id="openbarcomm" name="openbarcomm" value="{{openbar}}"> <button type="submit" class="btn btn-primary">打开</button>
+          </form>
+          <form action="/closebar" method="post">
+            <label>机库推杆夹紧</label>
+            <input type="text" class="form-control" placeholder="夹紧命令" id="closebarcomm" name="closebarcomm" value="{{closebar}}"> <button type="submit" class="btn btn-primary">夹紧</button>
+          </form>
+        </div>
+        <form action="/resetbar" method="post" style="width:auto">
+          <button type="submit" class="btn btn-primary custom-btn">复位</button>
+        </form>
+      </div>
+
+    </div>
+
+    <div id="aircon" class="group">
+      <div class="h5">空调开关</div>
+      <form action="/openair" method="post">
+        <label>空调打开</label>
+        <input type="text" class="form-control" placeholder="打开空调" id="openaircomm" name="openaircomm" value="{{openair}}"> <button type="submit" class="btn btn-primary">打开空调</button>
+      </form>
+      <form action="/closeair" method="post">
+        <label>空调关闭</label>
+        <input type="text" class="form-control" placeholder="关闭空调" id="closeaircomm" name="closeaircomm" value="{{closeair}}"> <button type="submit" class="btn btn-primary">关闭空调</button>
+      </form>
+    </div>
+
+    <div id="airconoper" class="group">
+      <div class="h5">空调操作</div>
+      <form action="/setair" method="post" class="disFlex">
+        <div class="left">
+          <div class="leftItem border-bottom border-primary border-dashed" >
+            <label>设置空调制冷停止温度（15-50）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="coldstoptem" name="coldstoptem" value="{{coldstoptem}}">
+          </div>
+
+          <div class="leftItem border-bottom border-primary border-dashed">
+            <label>设置空调制冷灵敏度（1-20）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="coldsenstem" name="coldsenstem" value="{{coldsenstem}}">
+          </div>
+          <div class="leftItem border-bottom border-primary border-dashed" >
+            <label>设置空调加热停止温度（小于制冷停止温度）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="hotstoptem" name="hotstoptem" value="{{hotstoptem}}">
+          </div>
+          <div class="leftItem border-bottom border-primary border-dashed">
+            <label>设置空调加热灵敏度（1-20）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="hotsenstem" name="hotsenstem" value="{{hotsenstem}}">
+          </div>
+          <div class="leftItem border-bottom border-primary border-dashed" >
+            <label>设置空调高湿湿度（60-100）</label>
+            <input type="text" class="form-control" placeholder="空调高湿湿度" id="hihum" name="hihum" value="{{hihum}}">
+          </div>
+          <div class="leftItem ">
+            <label>设置空调低湿湿度（10-50）</label>
+            <input type="text" class="form-control" placeholder="空调低湿湿度" id="lowhum" name="lowhum" value="{{lowhum}}">
+          </div>
+
+        </div>
+
+
+        <button type="submit" class="btn btn-primary">设置空调参数</button>
+      </form>
+    </div>
+
+    <div id="uavcontroller" class="group">
+      <div class="h5">探照灯操作</div>
+      <form action="/uavcontroller" method="post" class="flex">
+        <div class="formItem">
+          <label>探照灯打开</label>
+          <button type="submit" class="btn btn-primary" value="open" id="opencontroller" name="controller">打开探照灯</button>
+        </div>
+        <div class="formItem">
+          <label>探照灯关闭</label>
+          <button type="submit" class="btn btn-primary" value="close" id="closecontroller" name="controller">关闭探照灯</button>
+        </div>
+      </form>
+    </div>
+    <div id="wfccontroller" class="group">
+      <div class="h5">充电操作</div>
+      <form action="/wfccontroller" method="post">
+        <label>开机</label>
+        <input type="text" class="form-control" placeholder="开机" id="openwf" name="wfcommond" value="TakeOff"><button type="submit" class="btn btn-primary">开机</button>
+      </form>
+      <form action="/wfccontroller" method="post">
+        <label>关机</label>
+        <input type="text" class="form-control" placeholder="关机" id="closewf" name="wfcommond" value="DroneOff"><button type="submit" class="btn btn-primary">关机</button>
+      </form>
+      <form action="/wfccontroller" method="post">
+        <label>待机</label>
+        <input type="text" class="form-control" placeholder="待机" id="standby" name="wfcommond" value="Standby"><button type="submit" class="btn btn-primary">待机</button>
+      </form>
+      <form action="/wfccontroller" method="post">
+        <label>充电</label>
+        <input type="text" class="form-control" placeholder="充电" id="charge" name="wfcommond" value="Charge"><button type="submit" class="btn btn-primary">充电</button>
+      </form>
+       <form action="/wfccontroller" method="post">
+        <label>Check</label>
+        <input type="text" class="form-control" placeholder="Check" id="check" name="wfcommond" value="Check"><button type="submit" class="btn btn-primary">Check</button>
+      </form>
+       <form action="/wfccontroller" method="post">
+        <label>DisplayOn</label>
+        <input type="text" class="form-control" placeholder="Check" id="DisplayOn" name="wfcommond" value="DisplayOn"><button type="submit" class="btn btn-primary">DisplayOn</button>
+      </form>
+       <form action="/wfccontroller" method="post">
+        <label>DisplayOff</label>
+        <input type="text" class="form-control" placeholder="Check" id="DisplayOff" name="wfcommond" value="DisplayOff"><button type="submit" class="btn btn-primary">DisplayOff</button>
+      </form>
+      <form action="/wfccontroller" method="post">
+        <label>Connect</label>
+        <input type="text" class="form-control" placeholder="Check" id="Connect" name="wfcommond" value="Connect"><button type="submit" class="btn btn-primary">Connnect</button>
+      </form>
+      <label style="text-align:center">AB电池充电/断电，仅限M300机型</label>
+      <form action="/ABCharge" method="post">
+        <label>A充电</label>
+        <input type="text" class="form-control" placeholder="Check" id="A充电" name="wfcommond" value="AStartCharge"><button type="submit" class="btn btn-primary">A充电</button>
+      </form>
+      <form action="/ABCharge" method="post">
+        <label>A断充电</label>
+        <input type="text" class="form-control" placeholder="Check" id="A断充电" name="wfcommond" value="AStopCharge"><button type="submit" class="btn btn-primary">A断充电</button>
+      </form>
+      <form action="/ABCharge" method="post">
+        <label>B充电</label>
+        <input type="text" class="form-control" placeholder="Check" id="B充电" name="wfcommond" value="BStartCharge"><button type="submit" class="btn btn-primary">B充电</button>
+      </form>
+      <form action="/ABCharge" method="post">
+        <label>B断充电</label>
+        <input type="text" class="form-control" placeholder="Check" id="B断充电" name="wfcommond" value="BStopCharge"><button type="submit" class="btn btn-primary">B断充电</button>
+      </form>
+    </div>
+
+<!--     <div id="alarmcontroller" class="group">-->
+<!--      <div class="h5">警报操作</div>-->
+<!--      <form action="/alarmcontroller" method="post">-->
+<!--        <label >打开警报</label>-->
+<!--        <button type="submit" class="btn btn-primary"  name="alarm" id="openalarm" value="open">打开警报</button>-->
+<!--      </form>-->
+<!--      <form action="/alarmcontroller" method="post">-->
+<!--        <label>关闭警报</label>-->
+<!--        <button type="submit" class="btn btn-primary"  name="alarm" id="closealarm" value="close">关闭警报</button>-->
+<!--      </form>-->
+<!--    </div>-->
+
+     <div id="controller" class="group">
+      <div class="h5">遥控器开关机操作</div>
+      <form action="/opencontroller" method="post" class="flex">
+        <div class="formItem">
+          <label>遥控器打开</label>
+          <button type="submit" class="btn btn-primary" value="open" id="opencrt" name="controller">打开遥控器</button>
+        </div>
+        <div class="formItem">
+          <label>遥控器关闭</label>
+          <button type="submit" class="btn btn-primary" value="close" id="closecrt" name="controller">关闭遥控器</button>
+        </div>
+      </form>
+    </div>
+
+     <div id="alarmcontroller" class="group">
+      <div class="h5">警报操作</div>
+      <form action="/alarmcontroller" method="post" class="flex">
+        <div class="formItem">
+          <label>警报灯打开</label>
+          <button type="submit" class="btn btn-primary" value="open" id="openalarm" name="controller">打开警报灯</button>
+        </div>
+        <div class="formItem">
+          <label>警报灯关闭</label>
+          <button type="submit" class="btn btn-primary" value="close" id="closealarm" name="controller">关闭警报灯</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="group">
+      <div class="h5">机库开关门测试</div>
+      <form action="/testdoortimes" method="post" class="disFlex">
+        <div class="left">
+          <div class="leftItem">
+            <label>机库开关门参数</label>
+            <input type="text" class="form-control" placeholder="开门参数" id="doorpara" name="doorpara" value="140120">
+          </div>
+          <div class="leftItem">
+            <label>测试开关门次数</label>
+            <input type="text" class="form-control" placeholder="测试次数" id="doortesttimes" name="doortesttimes" value="20">
+          </div>
+          <div class="leftItem">
+            <label>开门等待时间</label>
+            <input type="text" class="form-control" placeholder="开门等待时间" id="openwait" name="openwait" value="2">
+          </div>
+          <div class="leftItem">
+            <label>关门等待时间</label>
+            <input type="text" class="form-control" placeholder="关门等待时间" id="closewait" name="closewait" value="5">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">测试</button>
+      </form>
+    </div>
+
+    <div class="group">
+      <div class="h5">机库推拉杆测试</div>
+      <form action="/testbartimes" method="post" class="disFlex">
+        <div class="left">
+          <div class="leftItem">
+            <label>机库推拉杆参数</label>
+            <input type="text" class="form-control" placeholder="推杆移动距离" id="tuigandis" name="tuigandis" value="2e12792242">
+          </div>
+          <div class="leftItem">
+            <label>测试次数</label>
+            <input type="text" class="form-control" placeholder="测试次数" id="testtimes" name="testtimes" value="20">
+          </div>
+          <div class="leftItem">
+            <label>夹紧等待时间</label>
+            <input type="text" class="form-control" placeholder="夹紧等待时间" id="jiajinwait" name="jiajinwait" value="2">
+          </div>
+          <div class="leftItem">
+            <label>原点等待时间</label>
+            <input type="text" class="form-control" placeholder="原点等待时间" id="originwait" name="originwait" value="5">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">测试</button>
+      </form>
+    </div>
+
+    <div class="group">
+      <div class="h5">机库推拉杆复位测试</div>
+      <form action="/testbarresettimes" method="post" class="disFlex">
+        <div class="left">
+          <div class="leftItem">
+            <label>机库推拉杆参数</label>
+            <input type="text" class="form-control" placeholder="推杆移动距离" id="tuiganresetdis" name="tuiganresetdis" value="2e12792242">
+          </div>
+          <div class="leftItem">
+            <label>测试次数</label>
+            <input type="text" class="form-control" placeholder="测试次数" id="testresettimes" name="testresettimes" value="20">
+          </div>
+          <div class="leftItem">
+            <label>夹紧等待时间</label>
+            <input type="text" class="form-control" placeholder="夹紧等待时间" id="resetjiajinwait" name="resetjiajinwait" value="2">
+          </div>
+          <div class="leftItem">
+            <label>复位等待时间</label>
+            <input type="text" class="form-control" placeholder="复位等待时间" id="resetwait" name="resetwait" value="5">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">测试</button>
+      </form>
+    </div>
+      <div class="group">
+        <div class="h5">本地日志</div>
+        <form action="/logupload" method="post" class="disFlex">
+          <button type="submit" class="btn btn-primary">上传日志</button>
+        </form>
+         <form action="/logclear" method="post" class="disFlex">
+            <button type="submit" class="btn btn-primary">清空日志</button>
+        </form>
+      </div>
+      <div class="group">
+        <div class="h5">重启服务端</div>
+        <form action="/reboot" method="post" class="disFlex">
+          <button type="submit" class="btn btn-primary">重启服务端</button>
+        </form>
+      </div>
+
+       <div class="group">
+        <div class="h5">升级上位机程序</div>
+        <form action="/updatesoftware" method="post" class="disFlex">
+          <button type="submit" class="btn btn-primary">升级上位机程序</button>
+        </form>
+      </div>
+
+  </div>
+
+</body>
+
+</html>

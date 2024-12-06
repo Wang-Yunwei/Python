@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>机库配置信息</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./static/css/style.css">
+  <script src="./static/js/jquery.min.js"></script>
+  <script src="./static/js/popper.min.js"></script>
+  <script src="./static/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+  <div class="container mt-3">
+     <div class="h3">
+      <span>版本发布日期：2024-05-09</span>
+      <span style="margin-left:20px;">下位机版本号：{{down_version}}</span>
+      <span style="margin-left:20px;">系统用户：{{username}}</span>
+
+    </div>
+    <div class="h3">
+      <img src="./static/img/icon.jpg" width="24">
+      机库配置
+    </div>
+    <div class="tips">
+      <p align="center"> (1)请根据服务端信息配置服务器IP地址和数据接收端口(socket)</p>
+      <p align="center"> (2)请在云端生成站点id信息，并将此id信息配置到此机库中</p>
+    </div>
+
+
+    <form action="/save" method="post">
+      <div class="input-group mb-3">
+        <div class="h4">服务器IP地址</div>
+        {% if ipaddress %}
+        <input type="text" class="form-control" placeholder="请输入服务器IP地址" id="server_ip" name="server_ip" value="{{ipaddress}}">
+        {% else %}
+        <input type="text" class="form-control" placeholder="请输入服务器IP地址" id="server_ip" name="server_ip">
+        {% endif %}
+
+      </div>
+
+      <div class="input-group mb-3">
+        <div class="h4">服务器端口号</div>
+        {% if socket %}
+        <input type="text" class="form-control" placeholder="请输入服务器端口号" id="socket" name="socket" value="{{socket}}">
+        {% else %}
+        <input type="text" class="form-control" placeholder="请输入服务器端口号" id="socket" name="socket">
+        {% endif %}
+
+      </div>
+
+      <div class="input-group mb-3">
+        <div class="h4">站点id值</div>
+        {% if station_id %}
+        <input type="text" class="form-control" placeholder="请输入站点id值" id="station_id" name="station_id" value="{{station_id}}">
+        {% else %}
+        <input type="text" class="form-control" placeholder="请输入站点id值" id="station_id" name="station_id">
+        {% endif %}
+      </div>
+
+      <div class="input-group mb-3">
+        <div class="h4">websocket完整地址(可选)</div>
+        {% if web_socket_url %}
+        <input type="text" class="form-control" placeholder="请输入websocket完整地址" id="web_socket_url" name="web_socket_url" value="{{web_socket_url}}">
+        {% else %}
+        <input type="text" class="form-control" placeholder="请输入websocket完整地址" id="web_socket_url" name="web_socket_url">
+        {% endif %}
+      </div>
+      <div style="text-align:center">
+        <button type="submit" class="btn btn-primary">保存配置</button>
+      </div>
+    </form>
+  </div>
+
+
+</body>
+
+</html>

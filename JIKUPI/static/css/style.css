@@ -1,0 +1,133 @@
+.container .label{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.container .label .label-item{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+.container .label .label-item span{
+    background-color: #ffebeb;
+    color:#fc3e3e ;
+    padding:10px;
+    border-radius: 6px; 
+}
+.container .h3{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 24px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed #e2e6eb;
+}
+.container .h3 img{
+    margin-right: 15px;
+}
+.container .group{
+     border:1px solid #e2e6eb;
+     border-radius: 5px;
+     overflow: hidden;
+     margin-bottom: 20px;
+}
+.container .group .h5{
+    background-color: #f1f7fd;
+    color:#1776d5 ;
+    font-size: 22px;
+    height: 48px;
+    line-height: 48px;
+    padding-left: 20px;
+}
+.group form{
+    width: 70%;
+    margin:0 auto;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.group form label{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0;
+    width:145px;
+    margin-right: 15px;
+    padding:0 15px;
+}
+.group form button{
+    width: 120px;
+    margin-left: 10px;
+}
+.formItem{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.formItem:nth-child(1),.group form.disFlex .left .leftItem:nth-child(1){
+    margin-bottom: 15px;
+}
+.group form.flex{
+    width:75%;
+    flex-direction: column;
+}
+.group form.disFlex{
+    display: flex;
+    justify-content: space-between;
+}
+.group .disFlex .left{
+    width: calc(100% - 140px);
+}
+.group form.disFlex .left .leftItem{
+    display: flex;
+   align-items: center;
+}
+.group form.disFlex .left .leftItem label{
+    width:144px;
+}
+.group form.disFlex button{
+    height: 95px;
+    display: block;
+}
+.group-con{
+    display: flex;width:70%;margin:0 auto;justify-content: flex-start;
+}
+.group-con .con-left{
+    width:80%;
+}
+.con-left form{
+    width:100%;
+}
+.con-left form label{
+    width:275px;
+}
+.group form button.custom-btn{
+    height: 86px;
+}
+/* 首页 */
+.tips{
+    background-color: #f0f3f8;
+    padding:20px 0 10px 0;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+.tips p{
+    margin-bottom: 10px;
+}
+.input-group{
+    flex-direction: column;
+}
+.input-group .h4{
+    width: 100%;
+    font-size: 16px;
+    font-weight: normal;
+}
+.input-group .form-control{
+    display: block;
+    width: 100%;
+    height:50px;
+    line-height: 50px;
+    border-radius: 5px !important;
+    margin:10px 0;
+}

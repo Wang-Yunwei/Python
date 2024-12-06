@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>机库挂载配置信息</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./static/css/style.css">
+    <script src="./static/js/jquery.min.js"></script>
+    <script src="./static/js/popper.min.js"></script>
+    <script src="./static/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+<div class="container mt-3">
+    <div class="h3">
+        <img src="./static/img/icon.jpg" width="24">
+        机库挂载配置
+    </div>
+    <div class="tips">
+        <p align="center">请根据当前机库使用场景和机库硬件配置进行挂载配置</p>
+    </div>
+
+    <form action="/saveconfig" method="post">
+        <div class="input-group mb-3">
+            <div class="h4">（1）充电类型配置</div>
+            {% if charge_version=="wfc" %}
+                <select name="charge_version" class="form-control">
+                    <option selected="selected">无线充电</option>
+                    <option>触点充电</option>
+                </select>
+            {% else %}
+                <select name="charge_version" class="form-control">
+                    <option>无线充电</option>
+                    <option selected="selected">触点充电</option>
+                </select>
+            {% endif %}
+
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">（2）如果是无线充电，请选择无线充电版本</div>
+            {% if wfc_version=="V1.0" %}
+                <select name="wfc_version" class="form-control">
+                    <option selected="selected">V1.0</option>
+                    <option>V2.0</option>
+                </select>
+            {% else %}
+                <select name="wfc_version" class="form-control">
+                    <option>V1.0</option>
+                    <option selected="selected">V2.0</option>
+                </select>
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">（3）如果是触点充电，请选择触点充电版本(V1.0为御机库充电，V2.0为M300充电，V3.0为M30充电，V4.0为M350充电)</div>
+            {% if wlc_version=="V1.0" %}
+                <select name="wlc_version" class="form-control">
+                    <option selected="selected">V1.0</option>
+                    <option>V2.0</option>
+                    <option >V3.0</option>
+                    <option >V4.0</option>
+                </select>
+            {% elif wlc_version=="V2.0"%}
+                <select name="wlc_version" class="form-control">
+                    <option>V1.0</option>
+                    <option selected="selected">V2.0</option>
+                    <option >V3.0</option>
+                    <option >V4.0</option>
+                </select>
+            {% elif wlc_version=="V3.0"%}
+                <select name="wlc_version" class="form-control">
+                    <option>V1.0</option>
+                    <option >V2.0</option>
+                    <option selected="selected">V3.0</option>
+                    <option >V4.0</option>
+                </select>
+             {% elif wlc_version=="V4.0"%}
+                <select name="wlc_version" class="form-control">
+                    <option>V1.0</option>
+                    <option >V2.0</option>
+                    <option >V3.0</option>
+                    <option selected="selected">V4.0</option>
+                </select>
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">（4）请选择下位机版本，V1.0为双USB控制板，V2.0为单USB控制板，V3.0为2.0机库控制板</div>
+            {% if down_version=="V1.0" %}
+                <select name="down_version" class="form-control">
+                    <option selected="selected">V1.0</option>
+                    <option>V2.0</option>
+                    <option>V3.0</option>
+                </select>
+            {% elif down_version=="V2.0" %}
+                <select name="down_version" class="form-control">
+                    <option>V1.0</option>
+                    <option selected="selected">V2.0</option>
+                    <option>V3.0</option>
+                </select>
+            {% elif down_version=="V3.0" %}
+                <select name="down_version" class="form-control">
+                    <option>V1.0</option>
+                    <option>V2.0</option>
+                    <option selected="selected">V3.0</option>
+                </select>
+
+            {% endif %}
+        </div>
+         <div class="input-group mb-3">
+            <div class="h4">（5）请选择推杆夹紧方式，先上下夹紧再左右夹紧（TDF）,先左右夹紧再上下夹紧（LRF）,同时夹紧（SAM）</div>
+            {% if bar_move_style=="TDF" %}
+                <select name="bar_move_style" class="form-control">
+                    <option selected="selected">TDF</option>
+                    <option>LRF</option>
+                    <option>SAM</option>
+                </select>
+            {% elif bar_move_style=="LRF" %}
+                <select name="bar_move_style" class="form-control">
+                    <option>TDF</option>
+                    <option selected="selected">LRF</option>
+                    <option>SAM</option>
+                </select>
+            {% elif bar_move_style=="SAM" %}
+                <select name="bar_move_style" class="form-control">
+                    <option>TDF</option>
+                    <option>LRF</option>
+                    <option selected="selected">SAM</option>
+                </select>
+
+            {% endif %}
+        </div>
+<!--        <div class="input-group mb-3">-->
+<!--            <div class="h4">推杆是否分开夹紧（夹紧推杆时先前后夹紧，然后左右夹紧）</div>-->
+<!--            {% if bar_diff_move %}-->
+<!--                <input class="form-check-input" type="checkbox" name="bar_diff_move" value="yes" checked>-->
+<!--            {% else %}-->
+<!--                <input class="form-check-input" type="checkbox" name="bar_diff_move" value="no">-->
+<!--            {% endif %}-->
+<!--        </div>-->
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用GPS</div>
+            {% if GPS %}
+                <input class="form-check-input" type="checkbox" name="GPS" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="GPS" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用天气信息</div>
+            {% if use_weather %}
+                <input class="form-check-input" type="checkbox" name="use_weather" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="use_weather" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用485获取天气信息</div>
+            {% if weather_485 %}
+                <input class="form-check-input" type="checkbox" name="weather_485" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="weather_485" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用雨雪传感器</div>
+            {% if rain %}
+                <input class="form-check-input" type="checkbox" name="rain" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="rain" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用雨量传感器</div>
+            {% if rain_num %}
+                <input class="form-check-input" type="checkbox" name="rain_num" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="rain_num" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用风力传感器</div>
+            {% if wind %}
+                <input class="form-check-input" type="checkbox" name="wind" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="wind" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用风向传感器</div>
+            {% if wind_dir %}
+                <input class="form-check-input" type="checkbox" name="wind_dir" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="wind_dir" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用温湿度传感器</div>
+            {% if temp_hum %}
+                <input class="form-check-input" type="checkbox" name="temp_hum" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="temp_hum" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否使用烟雾传感器</div>
+            {% if smoke %}
+                <input class="form-check-input" type="checkbox" name="smoke" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="smoke" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">无线充电是否使用USB全双工通信</div>
+            {% if wfc_double_connect %}
+                <input class="form-check-input" type="checkbox" name="wfc_double_connect" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="wfc_double_connect" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">触点充电，是否使用全双工通信</div>
+            {% if wlc_double_connect %}
+                <input class="form-check-input" type="checkbox" name="wlc_double_connect" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="wlc_double_connect" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否需要自动充电功能</div>
+            {% if need_auto_charge %}
+                <input class="form-check-input" type="checkbox" name="need_auto_charge" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="need_auto_charge" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否需要心跳检测功能(可能需要重启服务)</div>
+            {% if need_heartbeat_check %}
+                <input class="form-check-input" type="checkbox" name="need_heartbeat_check" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="need_heartbeat_check" value="no">
+            {% endif %}
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">是否读取机库内的温湿度</div>
+            {% if indoor_temp %}
+                <input class="form-check-input" type="checkbox" name="indoor_temp" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="indoor_temp" value="no">
+            {% endif %}
+        </div>
+         <div class="input-group mb-3">
+            <div class="h4">M300充电，是否启用均衡充电</div>
+            {% if blance_charge %}
+                <input class="form-check-input" type="checkbox" name="blance_charge" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="blance_charge" value="no">
+            {% endif %}
+        </div>
+          <div class="input-group mb-3">
+            <div class="h4">推杆夹紧后，前后推杆是否打开操作</div>
+            {% if td_bar %}
+                <input class="form-check-input" type="checkbox" name="td_bar" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="td_bar" value="no">
+            {% endif %}
+        </div>
+         <div class="input-group mb-3">
+            <div class="h4">是否启用充电失败后，推杆自动夹紧操作</div>
+            {% if repeat_bar %}
+                <input class="form-check-input" type="checkbox" name="repeat_bar" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="repeat_bar" value="no">
+            {% endif %}
+        </div>
+         <div class="input-group mb-3">
+            <div class="h4">是否启用每天凌晨0点到凌晨1点自动充电动作（御2飞机建议开启，其他机型不建议启动）</div>
+            {% if night_charge %}
+                <input class="form-check-input" type="checkbox" name="night_charge" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="night_charge" value="no">
+            {% endif %}
+        </div>
+         <div class="input-group mb-3">
+            <div class="h4">M300充电时，是否开启充电时候如单边电池充电停止充电操作</div>
+            {% if signal_battery_charge %}
+                <input class="form-check-input" type="checkbox" name="signal_battery_charge" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="signal_battery_charge" value="no">
+            {% endif %}
+        </div>
+        <div class="input-group mb-3">
+            <div class="h4">是否使用485控制空调信息</div>
+            {% if aircon485 %}
+                <input class="form-check-input" type="checkbox" name="aircon485" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="aircon485" value="no">
+            {% endif %}
+        </div>
+         <div class="input-group mb-3">
+            <div class="h4">是否使用警示灯装置</div>
+            {% if alarm %}
+                <input class="form-check-input" type="checkbox" name="alarm" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="alarm" value="no">
+            {% endif %}
+        </div>
+        <div class="input-group mb-3">
+            <div class="h4">大场景中是否使用同时开机、开门操作</div>
+            {% if meanopen %}
+                <input class="form-check-input" type="checkbox" name="meanopen" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="meanopen" value="no">
+            {% endif %}
+        </div>
+        <div class="input-group mb-3">
+            <div class="h4">是否需要夜间灯功能</div>
+            {% if night_light %}
+                <input class="form-check-input" type="checkbox" name="night_light" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="night_light" value="no">
+            {% endif %}
+        </div>
+         <div class="input-group mb-3">
+            <div class="h4">夜间灯功能是否启用时间段配置（如不启用，则开门后自动点亮夜航灯）</div>
+            {% if night_light_time %}
+                <input class="form-check-input" type="checkbox" name="night_light_time" value="yes" checked>
+            {% else %}
+                <input class="form-check-input" type="checkbox" name="night_light_time" value="no">
+            {% endif %}
+        </div>
+        <div class="input-group mb-3">
+            <div class="h4">夜间灯开启时间段起始时间</div>
+            <input type="text" class="form-control" placeholder="请输入夜间灯开启时间段起始时间" id="night_light_time_begin"
+                   name="night_light_time_begin"
+                   value="{{ night_light_time_begin }}">
+
+        </div>
+        <div class="input-group mb-3">
+            <div class="h4">夜间灯开启时间段结束时间</div>
+            <input type="text" class="form-control" placeholder="请输入夜间灯开启时间段结束时间" id="night_light_time_end"
+                   name="night_light_time_end"
+                   value="{{ night_light_time_end }}">
+        </div>
+
+         <div class="input-group mb-3">
+            <div class="h4">气象获取间隔时间段(秒)，必须为整数</div>
+            <input class="form-control" placeholder="请输入夜间灯开启时间段结束时间" id="weather_wait_time"
+                   name="weather_wait_time"
+                   value="{{ weather_wait_time }}"/>
+        </div>
+
+         <div class="input-group mb-3">
+            <div class="h4">设置遥控器IP地址，样例为:192.168.1.11  必须确保遥控器和上位机在一个局域网内，且遥控器的IP地址是固定IP</div>
+            <input class="form-control" placeholder="请输入遥控器固定IP地址" id="controller_ip"
+                   name="controller_ip"
+                   value="{{ controller_ip }}"/>
+        </div>
+
+        <div class="input-group mb-3">
+            <div class="h4">设置启动APP上位机IP地址和端口，样例为:192.168.1.9:9000  必须确保启动APP上位机和机库控制上位机在一个局域网内，且IP地址是固定IP</div>
+            <input class="form-control" placeholder="请输入遥控器固定IP地址" id="con_server_ip_port"
+                   name="con_server_ip_port"
+                   value="{{ con_server_ip_port }}"/>
+        </div>
+
+        <div style="text-align:center">
+            <button type="submit" class="btn btn-primary">保存挂载配置</button>
+        </div>
+    </form>
+</div>
+
+
+</body>
+
+</html>

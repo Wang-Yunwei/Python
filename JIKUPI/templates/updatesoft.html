@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>系统更新配置</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./static/css/style.css">
+  <script src="./static/js/jquery.min.js"></script>
+  <script src="./static/js/popper.min.js"></script>
+  <script src="./static/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+  <div class="container mt-3">
+    <div class="h3">
+      <img src="./static/img/icon.jpg" width="24">
+      系统更新配置
+    </div>
+    <div class="tips">
+      <p align="center">请根据当前部署环境进行上位机系统升级配置</p>
+    </div>
+    <form action="/saveupdateinfo" method="get">
+      <div class="input-group mb-3">
+        <div class="h4">服务器IP地址</div>
+        <input type="text" class="form-control" placeholder="请输入升级服务器 IP 地址" id="server_ip" name="server_ip" value="{{server_ip}}">
+      </div>
+      <div class="input-group mb-3">
+        <div class="h4">服务器IP端口</div>
+        <input type="text" class="form-control" placeholder="请输入升级服务器 端口" id="server_port" name="server_port" value="{{server_port}}">
+      </div>
+
+      <div style="text-align:center">
+        <button type="submit" class="btn btn-primary">保存系统升级配置</button>
+      </div>
+    </form>
+  </div>
+
+
+</body>
+
+</html>
