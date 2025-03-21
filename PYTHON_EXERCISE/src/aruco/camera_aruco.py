@@ -17,7 +17,7 @@ img_points = []  # 图像平面中的二维点
 images = glob.glob('*.png')
 
 # for fname in images:
-img = cv.imread("image/66.png")
+img = cv.imread("../../image/66.png")
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 # 检测 ArUco 标记

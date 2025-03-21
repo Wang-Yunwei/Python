@@ -78,7 +78,7 @@ def main():
     # 创建窗口
     cv2.namedWindow('image', cv2.WINDOW_AUTOSIZE)
     # cv2.resizeWindow('image', 800, 600)
-    # cv2.moveWindow('image', 700, 400)
+    cv2.moveWindow('image', 700, 400)
 
     # 获取视频设备/从文件中读取视频帧
     cap = cv2.VideoCapture(0)
@@ -89,7 +89,8 @@ def main():
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # 检测 ArUco 标记
         corners, ids, rejected_img_points = detector.detectMarkers(gray)
-
+        # 打印角点数据
+        print(f"corners: {corners}")
         if ids is not None:
             print(f"ids_len{len(ids)}")
             # 遍历每个检测到的 ArUco 标记

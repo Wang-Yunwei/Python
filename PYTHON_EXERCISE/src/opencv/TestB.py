@@ -43,7 +43,7 @@ def calculate_rotation_angle(dx, dy):
 
 def main():
     # 加载图像
-    image_path = 'image/test_image.png'
+    image_path = '../../image/test_image.png'
     image = cv2.imread(image_path)
     if image is None:
         print("Error: Could not load image.")

@@ -19,7 +19,7 @@ print(images.__sizeof__())
 
 # for image in images:
 print(1)
-img = cv.imread("image/22_9x6.png")
+img = cv.imread("../../image/22_9x6.png")
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
 # 找到棋盘角落

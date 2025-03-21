@@ -16,7 +16,7 @@ parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(aruco_dict, parameters)
 
 # 加载图像或视频帧
-frame = cv2.imread('image/DJI_20250110143131_0008_Z.JPG')  # 这里应该是你的图像加载逻辑
+frame = cv2.imread('../../image/DJI_20250110143131_0008_Z.JPG')  # 这里应该是你的图像加载逻辑
 
 if frame is None:
     print("Error: Could not load image.")

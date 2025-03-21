@@ -2,7 +2,7 @@
 import cv2
 
 # 1. 读取图像,替换为实际的图像路径,这里是当前目录下的 "bird.jpg"
-image = cv2.imread("./image/bird.jpg")
+image = cv2.imread("../../image/bird.jpg")
 
 # 检查图像是否成功读取
 if image is None:

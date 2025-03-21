@@ -22,7 +22,7 @@ objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2)
 axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, -3]]).reshape(-1, 3)
 
 # for fname in glob.glob('left*.jpg'):
-img = cv.imread("image/")
+img = cv.imread("../../image/")
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 ret, corners = cv.findChessboardCorners(gray, (7, 6), None)
 
