@@ -1,5 +1,5 @@
 # 无人机以及机库操作状态汇总v1.5 版本
-from BASEUtile.Config import Config
+import BASEUtile.Config as Config
 
 result_code_dict = {
     #
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     aa = [['11', '22', '33']]
     print(len(aa[0]))
     print(len(aa[0][1]))
-    config = Config()
-    configinfo_list = config.getconfiginfo()  # 列表元组的形式
+    # config = Config()
+    configinfo_list = Config.get_websocket_config_info()  # 列表元组的形式
     print(configinfo_list[0][1])
     print(len(configinfo_list[0]))

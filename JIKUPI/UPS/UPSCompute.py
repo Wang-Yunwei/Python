@@ -12,23 +12,18 @@ import threading
 import time
 import struct
 
-from BASEUtile.HangerState import HangerState
+import BASEUtile.HangarState as HangarState
 from BASEUtile.logger import Logger
 from SATA.SATACom import JKSATACOM
-from WFCharge.WFState import WFState
+# from WFCharge.WFState import WFState
 
 
 class UPSInfo():
     '''
-    获取气象信息
+    获取UPS信息
     '''
-    # def __init__(self,state,log):
-    #     self.state=state
-    #     self.logger=log
-    #     self.wait_time=30#等待30秒获取一次UPS数据
-
-    def __init__(self,state,log):
-        self.state = state
+    def __init__(self,log):
+        # self.state = state
         self.logger = log
         self.wait_time = 5  # 等待30秒获取一次UPS数据
 
@@ -50,7 +45,7 @@ class UPSInfo():
         # device_info_bar = "COM7"
         bps_bar = 2400
         timeout_bar = 0
-        statCom_ups = JKSATACOM(self.state, device_info_bar, bps_bar, timeout_bar,
+        statCom_ups = JKSATACOM(device_info_bar, bps_bar, timeout_bar,
                                 self.logger, None)
         commond_ups = "S0.1R0.2\r\n"  # 获取状态指令
         # 发送操作命令
@@ -67,13 +62,13 @@ class UPSInfo():
         #device_info_bar = "COM7"
         bps_bar = 2400
         timeout_bar = 0
-        statCom_ups = JKSATACOM(self.state, device_info_bar, bps_bar, timeout_bar,
+        statCom_ups = JKSATACOM(device_info_bar, bps_bar, timeout_bar,
                                 self.logger,None)
         commond_ups = "Q1\r\n"  # 获取状态指令
         while True:
             try:
                 if statCom_ups==None:
-                    statCom_ups = JKSATACOM(self.state, device_info_bar, bps_bar, timeout_bar,
+                    statCom_ups = JKSATACOM(device_info_bar, bps_bar, timeout_bar,
                                             self.logger,None)
                 # 发送操作命令
                 statCom_ups.engine.Open_Engine()  # 打开串口
@@ -88,13 +83,13 @@ class UPSInfo():
                     print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}ups串口获取值为空")
                     continue
                 if len(result_state) == 0:
-                   self.state.set_UPS(f"0")
+                   HangarState.set_is_ups_state(f"0")
                 else:
                     data_state = result_state.decode('ascii').split(' ')[7][0]
                     if data_state=='0':
-                        self.state.set_UPS(f"0")
+                        HangarState.set_is_ups_state(f"0")
                     else:
-                        self.state.set_UPS(f"1")#市电异常
+                        HangarState.set_is_ups_state(f"1")#市电异常
                 time.sleep(self.wait_time) #有此操作，信号获取数据稳定
             except Exception as e:
                 print(f"ups异常{e}")
@@ -104,11 +99,12 @@ class UPSInfo():
 
 
 if __name__ == "__main__":
-    logger = Logger(__name__)  # 日志记录
-    wfcstate = WFState()
-    hangstate = HangerState(wfcstate)
-    ws = UPSInfo(hangstate,logger)
-    # #启用一个线程
-    th = threading.Thread(target=ws.start_get_ups(), args=())
-    th.start()
-    th.join()  # 等待子进程结束
+    pass
+    # logger = Logger(__name__)  # 日志记录
+    # wfcstate = WFState()
+    # hangstate = HangarState(wfcstate)
+    # ws = UPSInfo(hangstate,logger)
+    # # #启用一个线程
+    # th = threading.Thread(target=ws.start_get_ups(), args=())
+    # th.start()
+    # th.join()  # 等待子进程结束

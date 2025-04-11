@@ -9,7 +9,7 @@ import threading
 
 import minio
 
-from BASEUtile.Config import Config
+import BASEUtile.Config as Config
 
 """
 @author:ZKL
@@ -158,8 +158,8 @@ class MiniUtils:
     # 每次启动一个线程去执行这个任务，上传日志到minIo服务器
     def upload_log(self):
         try:
-            config = Config()
-            configinfo_list = config.get_minio_config()
+            # config = Config()
+            configinfo_list = Config.get_minio_config_info()
             minio_ip = configinfo_list[0][1]
             minio_username = configinfo_list[0][2]
             minio_password = configinfo_list[0][3]
@@ -171,8 +171,8 @@ class MiniUtils:
                 'secure': False
             }
             self.minioClient = minio.Minio(**self.minio_conf)
-            configinfo_list = config.getconfiginfo()
-            station_id = configinfo_list[0][3]
+            configinfo_list = Config.get_websocket_config_info()
+            station_id = configinfo_list[0][1]
             curPath = self.loggerpath
             if self.minioClient.bucket_exists(bucket_name=buckname):  # bucket_exists：检查桶是否存在
                 pass

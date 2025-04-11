@@ -1,0 +1,651 @@
+2025-01-02 16:00:39,304-__main__-INFO-[AutoChargeControl]===启动自动化充电功能线程===
+2025-01-02 16:00:39,306-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:00:39,306-__main__-INFO-开始启动websocket服务
+2025-01-02 16:00:39,308-__main__-INFO-第一次启动，无法连接websocket服务器，[Errno 101] Network is unreachable
+2025-01-02 16:00:39,309-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:00:39,309-__main__-INFO-需要启动心跳检测，休眠后启动
+2025-01-02 16:00:39,310-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 101] Network is unreachable
+2025-01-02 16:00:44,313-__main__-INFO-心跳websocket未连接
+2025-01-02 16:00:44,314-__main__-INFO-webclient已启动，启动webservice
+2025-01-02 16:00:44,316-__main__-INFO-启动485天气
+2025-01-02 16:00:44,317-__main__-INFO-启动天气线程
+2025-01-02 16:00:44,320-__main__-INFO-[MQTT]禁用MQTT服务，无需启动
+2025-01-02 16:00:44,320-__main__-INFO-[InitHangar._init_updown_lift_state]初始化升降台状态-开始
+2025-01-02 16:00:44,320-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:730000
+2025-01-02 16:00:44,321-__main__-INFO-[OperateUtil.step_scene_state_updown_lift_730000]升降台状态获取-开始
+2025-01-02 16:00:44,321-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:00:44,322-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:00:44,322-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V5.0
+2025-01-02 16:00:44,323-__main__-INFO-[JCCServerV5._init_serial]初始化串口USBCharge异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBCharge: [Errno 2] No such file or directory: '/dev/ttyUSBCharge'
+2025-01-02 16:00:44,323-__main__-INFO-[JCCServerV5.Check]执行状态命令-开始
+2025-01-02 16:00:44,324-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:01 04 00 00 00 03 B0 0B,读取数据异常,异常信息:'NoneType' object has no attribute 'flushOutput'
+2025-01-02 16:00:44,324-__main__-INFO-[JCCServerV5.Check]执行状态命令-异常,异常信息为:invalid literal for int() with base 16: ''
+2025-01-02 16:00:44,324-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:error
+2025-01-02 16:00:44,324-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:00:44,325-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:00:46,324-__main__-INFO-[UpdownLiftV2.get_lift_state]获取升降台状态-开始
+2025-01-02 16:00:47,527-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:12 02 00 00 00 01 BB 69,写入字节数为:8,读取通道返回值字节为:b'',转换字符串后为:
+2025-01-02 16:00:48,529-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:12 02 00 01 00 01 EA A9,写入字节数为:8,读取通道返回值字节为:b'',转换字符串后为:
+2025-01-02 16:00:48,529-__main__-INFO-[UpdownLiftV2.get_lift_state]获取升降台状态-结束,返回结果：0
+2025-01-02 16:00:48,630-__main__-INFO-[OperateUtil.step_scene_state_updown_lift_730000]升降台状态获取-结束,返回结果为:9731
+2025-01-02 16:00:48,630-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:730000,返回结果为:9731
+2025-01-02 16:00:48,633-__main__-INFO-[InitHangar._init_updown_lift_state]初始化升降台状态-结束,初始化失败,从配置文件中获取状态为:down
+2025-01-02 16:00:48,633-__main__-INFO-[InitHangar._init_turn_lift_state]初始化旋转台状态-开始
+2025-01-02 16:00:48,634-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:830000
+2025-01-02 16:00:48,634-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-开始
+2025-01-02 16:00:50,637-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:00:50,637-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-结束,返回结果为:9831
+2025-01-02 16:00:50,637-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:830000,返回结果为:9831
+2025-01-02 16:00:50,640-__main__-INFO-[InitHangar._init_turn_lift_state]串口初始化旋转台状态-结束,初始化失败,从配置文件中获取状态为:back
+2025-01-02 16:00:50,642-__main__-INFO-[InitHangar._init_hangar_version]初始化机库版本为:wk_nest_01
+2025-01-02 16:00:50,643-__main__-INFO-[InitHangar._init_hangar_door_state]初始化门状态-开始
+2025-01-02 16:00:50,643-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:170000
+2025-01-02 16:00:50,643-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-开始
+2025-01-02 16:00:52,646-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:00:52,647-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-结束,返回结果为:9171
+2025-01-02 16:00:52,647-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:170000,返回结果为:9171
+2025-01-02 16:00:52,650-__main__-INFO-[InitHangar._init_hangar_door_state]串口初始化门状态-结束,初始化失败,从配置文件中获取状态为:close
+2025-01-02 16:00:52,651-__main__-INFO-[InitHangar._init_hangar_bar_state]初始化推杆状态-开始
+2025-01-02 16:00:52,651-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:2g0000
+2025-01-02 16:00:52,652-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-开始
+2025-01-02 16:00:54,321-__main__-INFO-心跳websocket未连接
+2025-01-02 16:00:54,653-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:00:54,654-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-结束,返回结果为:92g1
+2025-01-02 16:00:54,654-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:2g0000,返回结果为:92g1
+2025-01-02 16:00:54,658-__main__-INFO-[InitHangar._init_hangar_bar_state]串口初始化推杆状态-结束,初始化失败,从配置文件中获取状态为:close
+2025-01-02 16:00:54,659-__main__-INFO-[机库启动]警示灯配置文件alarm:False,警示绿灯线程无需开启
+2025-01-02 16:00:54,660-__main__-INFO-服务开启，完成
+2025-01-02 16:00:59,314-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:01:04,327-__main__-INFO-心跳websocket未连接
+2025-01-02 16:01:04,192-__main__-INFO-风速获取为空
+2025-01-02 16:01:11,184-__main__-INFO-心跳websocket未连接
+2025-01-02 16:01:21,193-__main__-INFO-心跳websocket未连接
+2025-01-02 16:01:27,217-__main__-INFO-风速获取为空
+2025-01-02 16:01:31,202-__main__-INFO-心跳websocket未连接
+2025-01-02 16:01:36,212-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:01:41,212-__main__-INFO-心跳websocket未连接
+2025-01-02 16:01:41,232-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:01:41,232-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:01:41,233-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V5.0
+2025-01-02 16:01:41,252-__main__-INFO-[JCCServerV5._init_serial]初始化串口USBCharge异常,异常信息为:Could not configure port: (22, 'Invalid argument')
+2025-01-02 16:01:41,252-__main__-INFO-[JCCServerV5.Check]执行状态命令-开始
+2025-01-02 16:01:41,253-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:01 04 00 00 00 03 B0 0B,读取数据异常,异常信息:'NoneType' object has no attribute 'flushOutput'
+2025-01-02 16:01:41,253-__main__-INFO-[JCCServerV5.Check]执行状态命令-异常,异常信息为:invalid literal for int() with base 16: ''
+2025-01-02 16:01:41,254-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:error
+2025-01-02 16:01:41,254-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:01:41,254-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:01:50,243-__main__-INFO-风速获取为空
+2025-01-02 16:01:51,220-__main__-INFO-心跳websocket未连接
+2025-01-02 16:02:01,230-__main__-INFO-心跳websocket未连接
+2025-01-02 16:02:11,240-__main__-INFO-心跳websocket未连接
+2025-01-02 16:02:13,268-__main__-INFO-风速获取为空
+2025-01-02 16:02:21,248-__main__-INFO-心跳websocket未连接
+2025-01-02 16:02:31,256-__main__-INFO-心跳websocket未连接
+2025-01-02 16:02:36,273-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:02:36,294-__main__-INFO-风速获取为空
+2025-01-02 16:02:41,267-__main__-INFO-心跳websocket未连接
+2025-01-02 16:02:41,267-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:02:41,268-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:02:41,269-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V5.0
+2025-01-02 16:02:41,296-__main__-INFO-[JCCServerV5._init_serial]初始化串口USBCharge异常,异常信息为:Could not configure port: (22, 'Invalid argument')
+2025-01-02 16:02:41,296-__main__-INFO-[JCCServerV5.Check]执行状态命令-开始
+2025-01-02 16:02:41,297-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:01 04 00 00 00 03 B0 0B,读取数据异常,异常信息:'NoneType' object has no attribute 'flushOutput'
+2025-01-02 16:02:41,297-__main__-INFO-[JCCServerV5.Check]执行状态命令-异常,异常信息为:invalid literal for int() with base 16: ''
+2025-01-02 16:02:41,298-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:error
+2025-01-02 16:02:41,298-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:02:41,299-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:02:51,276-__main__-INFO-心跳websocket未连接
+2025-01-02 16:02:59,320-__main__-INFO-风速获取为空
+2025-01-02 16:03:01,286-__main__-INFO-心跳websocket未连接
+2025-01-02 16:03:05,644-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 110] Connection timed out
+2025-01-02 16:03:11,297-__main__-INFO-心跳websocket未连接
+2025-01-02 16:03:21,307-__main__-INFO-心跳websocket未连接
+2025-01-02 16:03:22,344-__main__-INFO-风速获取为空
+2025-01-02 16:03:25,664-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:03:31,318-__main__-INFO-心跳websocket未连接
+2025-01-02 16:03:36,332-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:03:41,328-__main__-INFO-心跳websocket未连接
+2025-01-02 16:03:41,357-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:03:41,358-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:03:41,358-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V5.0
+2025-01-02 16:03:41,372-__main__-INFO-[JCCServerV5._init_serial]初始化串口USBCharge异常,异常信息为:Could not configure port: (22, 'Invalid argument')
+2025-01-02 16:03:41,372-__main__-INFO-[JCCServerV5.Check]执行状态命令-开始
+2025-01-02 16:03:41,373-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:01 04 00 00 00 03 B0 0B,读取数据异常,异常信息:'NoneType' object has no attribute 'flushOutput'
+2025-01-02 16:03:41,373-__main__-INFO-[JCCServerV5.Check]执行状态命令-异常,异常信息为:invalid literal for int() with base 16: ''
+2025-01-02 16:03:41,374-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:error
+2025-01-02 16:03:41,374-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:03:41,375-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:03:45,368-__main__-INFO-风速获取为空
+2025-01-02 16:03:51,338-__main__-INFO-心跳websocket未连接
+2025-01-02 16:04:01,339-__main__-INFO-心跳websocket未连接
+2025-01-02 16:04:08,395-__main__-INFO-风速获取为空
+2025-01-02 16:04:11,350-__main__-INFO-心跳websocket未连接
+2025-01-02 16:04:21,360-__main__-INFO-心跳websocket未连接
+2025-01-02 16:04:31,368-__main__-INFO-心跳websocket未连接
+2025-01-02 16:04:31,422-__main__-INFO-风速获取为空
+2025-01-02 16:04:36,393-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:04:41,379-__main__-INFO-心跳websocket未连接
+2025-01-02 16:04:41,379-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:04:41,380-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:04:41,381-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V5.0
+2025-01-02 16:04:41,396-__main__-INFO-[JCCServerV5._init_serial]初始化串口USBCharge异常,异常信息为:Could not configure port: (22, 'Invalid argument')
+2025-01-02 16:04:41,396-__main__-INFO-[JCCServerV5.Check]执行状态命令-开始
+2025-01-02 16:04:41,397-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:01 04 00 00 00 03 B0 0B,读取数据异常,异常信息:'NoneType' object has no attribute 'flushOutput'
+2025-01-02 16:04:41,397-__main__-INFO-[JCCServerV5.Check]执行状态命令-异常,异常信息为:invalid literal for int() with base 16: ''
+2025-01-02 16:04:41,398-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:error
+2025-01-02 16:04:41,398-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:04:41,398-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:04:51,389-__main__-INFO-心跳websocket未连接
+2025-01-02 16:04:54,448-__main__-INFO-风速获取为空
+2025-01-02 16:05:01,398-__main__-INFO-心跳websocket未连接
+2025-01-02 16:05:11,409-__main__-INFO-心跳websocket未连接
+2025-01-02 16:05:17,471-__main__-INFO-风速获取为空
+2025-01-02 16:05:21,419-__main__-INFO-心跳websocket未连接
+2025-01-02 16:05:31,423-__main__-INFO-心跳websocket未连接
+2025-01-02 16:05:35,148-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 110] Connection timed out
+2025-01-02 16:05:36,425-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:05:40,497-__main__-INFO-风速获取为空
+2025-01-02 16:05:41,432-__main__-INFO-心跳websocket未连接
+2025-01-02 16:05:41,459-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:05:41,459-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:05:41,460-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V5.0
+2025-01-02 16:05:41,480-__main__-INFO-[JCCServerV5._init_serial]初始化串口USBCharge异常,异常信息为:Could not configure port: (22, 'Invalid argument')
+2025-01-02 16:05:41,480-__main__-INFO-[JCCServerV5.Check]执行状态命令-开始
+2025-01-02 16:05:41,481-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:01 04 00 00 00 03 B0 0B,读取数据异常,异常信息:'NoneType' object has no attribute 'flushOutput'
+2025-01-02 16:05:41,481-__main__-INFO-[JCCServerV5.Check]执行状态命令-异常,异常信息为:invalid literal for int() with base 16: ''
+2025-01-02 16:05:41,482-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:error
+2025-01-02 16:05:41,482-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:05:41,482-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:05:51,443-__main__-INFO-心跳websocket未连接
+2025-01-02 16:05:55,168-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:06:01,452-__main__-INFO-心跳websocket未连接
+2025-01-02 16:06:03,524-__main__-INFO-风速获取为空
+2025-01-02 16:06:11,460-__main__-INFO-心跳websocket未连接
+2025-01-02 16:06:21,468-__main__-INFO-心跳websocket未连接
+2025-01-02 16:06:26,548-__main__-INFO-风速获取为空
+2025-01-02 16:06:31,478-__main__-INFO-心跳websocket未连接
+2025-01-02 16:06:36,484-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:06:41,488-__main__-INFO-心跳websocket未连接
+2025-01-02 16:06:41,541-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:06:41,541-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:06:41,541-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V5.0
+2025-01-02 16:06:41,564-__main__-INFO-[JCCServerV5._init_serial]初始化串口USBCharge异常,异常信息为:Could not configure port: (22, 'Invalid argument')
+2025-01-02 16:06:41,565-__main__-INFO-[JCCServerV5.Check]执行状态命令-开始
+2025-01-02 16:06:41,565-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:01 04 00 00 00 03 B0 0B,读取数据异常,异常信息:'NoneType' object has no attribute 'flushOutput'
+2025-01-02 16:06:41,566-__main__-INFO-[JCCServerV5.Check]执行状态命令-异常,异常信息为:invalid literal for int() with base 16: ''
+2025-01-02 16:06:41,566-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:error
+2025-01-02 16:06:41,566-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:06:41,567-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:06:49,573-__main__-INFO-风速获取为空
+2025-01-02 16:06:51,499-__main__-INFO-心跳websocket未连接
+2025-01-02 16:07:01,508-__main__-INFO-心跳websocket未连接
+2025-01-02 16:07:11,518-__main__-INFO-心跳websocket未连接
+2025-01-02 16:07:12,598-__main__-INFO-风速获取为空
+2025-01-02 16:07:21,528-__main__-INFO-心跳websocket未连接
+2025-01-02 16:07:29,706-__main__-INFO-[saveconfigpage]参数设置ImmutableMultiDict([('charge_version', '触点充电'), ('wfc_version', 'V2.0'), ('wlc_version', 'V4.0'), ('down_version', 'V3.0'), ('bar_move_style', 'TDF'), ('air_condition_computer_version', 'V1.0'), ('hangar_version', 'wk_nest_01'), ('use_weather', 'yes'), ('weather_485', 'yes'), ('rain', 'yes'), ('wind', 'yes'), ('wind_dir', 'yes'), ('wlc_double_connect', 'yes'), ('need_auto_charge', 'yes'), ('need_heartbeat_check', 'yes'), ('blance_charge', 'yes'), ('aircon485', 'yes'), ('night_light', 'no'), ('night_light_time', 'no'), ('night_light_time_begin', '16'), ('night_light_time_end', '07'), ('weather_wait_time', '6'), ('controller_ip', '192.168.1.11'), ('con_server_ip_port', '')])
+2025-01-02 16:07:29,707-__main__-INFO-[Config Ini]设置开关等配置信息: charge_version=wlc,wfc_version=V2.0,bar_diff_move=False,GPS=False,use_weather=True,weather_485=True,rain=True,rain_num=False,wind=True,wind_dir=True,temp_hum=False,smoke=False,down_version=V3.0,wfc_double_connect=False,wlc_double_connect=True,need_auto_charge=True,need_heartbeat_check=True,indoor_temp=False,wlc_version=V4.0
+2025-01-02 16:07:31,539-__main__-INFO-心跳websocket未连接
+2025-01-02 16:07:35,624-__main__-INFO-风速获取为空
+2025-01-02 16:07:36,544-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:07:41,548-__main__-INFO-心跳websocket未连接
+2025-01-02 16:07:41,624-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:07:41,624-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:07:41,625-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:07:41,640-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:07:41,653-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:07:41,672-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:07:41,688-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:07:41,688-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:07:41,689-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:07:41,689-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:08:08,382-__main__-INFO-[AutoChargeControl]===启动自动化充电功能线程===
+2025-01-02 16:08:08,384-__main__-INFO-开始启动websocket服务
+2025-01-02 16:08:08,385-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:08:08,387-__main__-INFO-第一次启动，无法连接websocket服务器，[Errno 101] Network is unreachable
+2025-01-02 16:08:08,388-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:08:08,389-__main__-INFO-需要启动心跳检测，休眠后启动
+2025-01-02 16:08:08,391-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 101] Network is unreachable
+2025-01-02 16:08:13,394-__main__-INFO-webclient已启动，启动webservice
+2025-01-02 16:08:13,395-__main__-INFO-心跳websocket未连接
+2025-01-02 16:08:13,396-__main__-INFO-启动485天气
+2025-01-02 16:08:13,399-__main__-INFO-启动天气线程
+2025-01-02 16:08:13,401-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:08:13,402-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:08:13,402-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:08:13,405-__main__-INFO-[MQTT]禁用MQTT服务，无需启动
+2025-01-02 16:08:13,405-__main__-INFO-[InitHangar._init_updown_lift_state]初始化升降台状态-开始
+2025-01-02 16:08:13,406-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:730000
+2025-01-02 16:08:13,406-__main__-INFO-[OperateUtil.step_scene_state_updown_lift_730000]升降台状态获取-开始
+2025-01-02 16:08:13,421-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:08:13,436-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:08:13,458-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:08:13,473-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:08:13,474-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:08:13,474-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:08:13,475-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:08:15,410-__main__-INFO-[UpdownLiftV2.get_lift_state]获取升降台状态-开始
+2025-01-02 16:08:16,615-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:12 02 00 00 00 01 BB 69,写入字节数为:8,读取通道返回值字节为:b'',转换字符串后为:
+2025-01-02 16:08:17,617-__main__-INFO-[BusinessUtil.execute_command_hex]执行命令为:12 02 00 01 00 01 EA A9,写入字节数为:8,读取通道返回值字节为:b'',转换字符串后为:
+2025-01-02 16:08:17,618-__main__-INFO-[UpdownLiftV2.get_lift_state]获取升降台状态-结束,返回结果：0
+2025-01-02 16:08:17,719-__main__-INFO-[OperateUtil.step_scene_state_updown_lift_730000]升降台状态获取-结束,返回结果为:9731
+2025-01-02 16:08:17,719-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:730000,返回结果为:9731
+2025-01-02 16:08:17,721-__main__-INFO-[InitHangar._init_updown_lift_state]初始化升降台状态-结束,初始化失败,从配置文件中获取状态为:down
+2025-01-02 16:08:17,722-__main__-INFO-[InitHangar._init_turn_lift_state]初始化旋转台状态-开始
+2025-01-02 16:08:17,722-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:830000
+2025-01-02 16:08:17,722-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-开始
+2025-01-02 16:08:19,725-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:08:19,725-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-结束,返回结果为:9831
+2025-01-02 16:08:19,725-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:830000,返回结果为:9831
+2025-01-02 16:08:19,728-__main__-INFO-[InitHangar._init_turn_lift_state]串口初始化旋转台状态-结束,初始化失败,从配置文件中获取状态为:back
+2025-01-02 16:08:19,730-__main__-INFO-[InitHangar._init_hangar_version]初始化机库版本为:wk_nest_01
+2025-01-02 16:08:19,730-__main__-INFO-[InitHangar._init_hangar_door_state]初始化门状态-开始
+2025-01-02 16:08:19,731-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:170000
+2025-01-02 16:08:19,732-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-开始
+2025-01-02 16:08:21,734-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:08:21,734-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-结束,返回结果为:9171
+2025-01-02 16:08:21,735-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:170000,返回结果为:9171
+2025-01-02 16:08:21,738-__main__-INFO-[InitHangar._init_hangar_door_state]串口初始化门状态-结束,初始化失败,从配置文件中获取状态为:close
+2025-01-02 16:08:21,739-__main__-INFO-[InitHangar._init_hangar_bar_state]初始化推杆状态-开始
+2025-01-02 16:08:21,739-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:2g0000
+2025-01-02 16:08:21,740-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-开始
+2025-01-02 16:08:22,410-__main__-INFO-风速获取为空
+2025-01-02 16:08:23,406-__main__-INFO-心跳websocket未连接
+2025-01-02 16:08:23,742-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:08:23,743-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-结束,返回结果为:92g1
+2025-01-02 16:08:23,743-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:2g0000,返回结果为:92g1
+2025-01-02 16:08:23,746-__main__-INFO-[InitHangar._init_hangar_bar_state]串口初始化推杆状态-结束,初始化失败,从配置文件中获取状态为:close
+2025-01-02 16:08:23,748-__main__-INFO-[机库启动]警示灯配置文件alarm:False,警示绿灯线程无需开启
+2025-01-02 16:08:23,748-__main__-INFO-服务开启，完成
+2025-01-02 16:08:28,409-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:08:31,423-__main__-INFO-风速获取为空
+2025-01-02 16:08:33,409-__main__-INFO-心跳websocket未连接
+2025-01-02 16:08:40,433-__main__-INFO-风速获取为空
+2025-01-02 16:08:43,417-__main__-INFO-心跳websocket未连接
+2025-01-02 16:08:49,446-__main__-INFO-风速获取为空
+2025-01-02 16:08:53,428-__main__-INFO-心跳websocket未连接
+2025-01-02 16:08:58,459-__main__-INFO-风速获取为空
+2025-01-02 16:09:03,438-__main__-INFO-心跳websocket未连接
+2025-01-02 16:09:07,469-__main__-INFO-风速获取为空
+2025-01-02 16:09:08,448-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:09:13,448-__main__-INFO-心跳websocket未连接
+2025-01-02 16:09:13,478-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:09:13,479-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:09:13,479-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:09:13,493-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:09:13,495-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:09:13,513-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:09:13,529-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:09:13,530-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:09:13,530-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:09:13,531-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:09:16,481-__main__-INFO-风速获取为空
+2025-01-02 16:09:23,457-__main__-INFO-心跳websocket未连接
+2025-01-02 16:09:25,494-__main__-INFO-风速获取为空
+2025-01-02 16:09:33,467-__main__-INFO-心跳websocket未连接
+2025-01-02 16:09:34,507-__main__-INFO-风速获取为空
+2025-01-02 16:09:43,472-__main__-INFO-心跳websocket未连接
+2025-01-02 16:09:43,519-__main__-INFO-风速获取为空
+2025-01-02 16:09:52,531-__main__-INFO-风速获取为空
+2025-01-02 16:09:53,482-__main__-INFO-心跳websocket未连接
+2025-01-02 16:10:01,544-__main__-INFO-风速获取为空
+2025-01-02 16:10:03,492-__main__-INFO-心跳websocket未连接
+2025-01-02 16:10:08,509-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:10:10,555-__main__-INFO-风速获取为空
+2025-01-02 16:10:13,503-__main__-INFO-心跳websocket未连接
+2025-01-02 16:10:13,544-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:10:13,545-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:10:13,545-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:10:13,565-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:10:13,567-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:10:13,581-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:10:13,597-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:10:13,598-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:10:13,598-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:10:13,599-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:10:19,565-__main__-INFO-风速获取为空
+2025-01-02 16:10:23,507-__main__-INFO-心跳websocket未连接
+2025-01-02 16:10:28,577-__main__-INFO-风速获取为空
+2025-01-02 16:10:33,510-__main__-INFO-心跳websocket未连接
+2025-01-02 16:10:37,589-__main__-INFO-风速获取为空
+2025-01-02 16:10:37,881-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 110] Connection timed out
+2025-01-02 16:10:43,521-__main__-INFO-心跳websocket未连接
+2025-01-02 16:10:46,601-__main__-INFO-风速获取为空
+2025-01-02 16:10:53,529-__main__-INFO-心跳websocket未连接
+2025-01-02 16:10:55,613-__main__-INFO-风速获取为空
+2025-01-02 16:10:57,895-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:11:03,534-__main__-INFO-心跳websocket未连接
+2025-01-02 16:11:04,627-__main__-INFO-风速获取为空
+2025-01-02 16:11:08,518-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:11:13,541-__main__-INFO-心跳websocket未连接
+2025-01-02 16:11:13,638-__main__-INFO-风速获取为空
+2025-01-02 16:11:13,657-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:11:13,658-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:11:13,658-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:11:13,673-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:11:13,675-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:11:13,693-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:11:13,709-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:11:13,710-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:11:13,710-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:11:13,711-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:11:22,652-__main__-INFO-风速获取为空
+2025-01-02 16:11:23,546-__main__-INFO-心跳websocket未连接
+2025-01-02 16:11:31,661-__main__-INFO-风速获取为空
+2025-01-02 16:11:33,555-__main__-INFO-心跳websocket未连接
+2025-01-02 16:11:40,673-__main__-INFO-风速获取为空
+2025-01-02 16:11:43,564-__main__-INFO-心跳websocket未连接
+2025-01-02 16:11:49,686-__main__-INFO-风速获取为空
+2025-01-02 16:11:53,573-__main__-INFO-心跳websocket未连接
+2025-01-02 16:11:58,697-__main__-INFO-风速获取为空
+2025-01-02 16:12:03,582-__main__-INFO-心跳websocket未连接
+2025-01-02 16:12:07,710-__main__-INFO-风速获取为空
+2025-01-02 16:12:08,577-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:12:13,589-__main__-INFO-心跳websocket未连接
+2025-01-02 16:12:13,769-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:12:13,770-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:12:13,770-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:12:13,789-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:12:13,791-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:12:13,809-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:12:13,825-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:12:13,826-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:12:13,826-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:12:13,827-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:12:16,721-__main__-INFO-风速获取为空
+2025-01-02 16:12:23,597-__main__-INFO-心跳websocket未连接
+2025-01-02 16:12:25,734-__main__-INFO-风速获取为空
+2025-01-02 16:12:33,602-__main__-INFO-心跳websocket未连接
+2025-01-02 16:12:34,746-__main__-INFO-风速获取为空
+2025-01-02 16:12:35,499-__main__-INFO-[Config Ini]设置指令配置信息: opendoor=140090
+2025-01-02 16:12:35,503-__main__-INFO-[http.opendoor]页面调用开门
+2025-01-02 16:12:35,504-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:140000
+2025-01-02 16:12:35,504-__main__-INFO-[OperateUtil.step_scene_door_open_140000]机库门打开-开始
+2025-01-02 16:12:37,510-__main__-INFO-[OperateUtil.step_scene_door_open_140000]机库门打开-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:12:37,513-__main__-INFO-[OperateUtil.step_scene_night_light_open_400000]机库夜灯打开-开始
+2025-01-02 16:12:39,516-__main__-INFO-[OperateUtil.step_scene_night_light_open_400000]机库夜灯打开-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:12:39,517-__main__-INFO-[OperateUtil.step_scene_night_light_open_400000]机库夜灯打开-结束,返回结果为:9401
+2025-01-02 16:12:39,517-__main__-INFO-[OperateUtil.step_scene_door_open_140000]机库门打开-结束,返回结果为:9141
+2025-01-02 16:12:39,517-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:140000,返回结果为:9141
+2025-01-02 16:12:43,609-__main__-INFO-心跳websocket未连接
+2025-01-02 16:12:43,757-__main__-INFO-风速获取为空
+2025-01-02 16:12:52,770-__main__-INFO-风速获取为空
+2025-01-02 16:12:53,619-__main__-INFO-心跳websocket未连接
+2025-01-02 16:13:01,781-__main__-INFO-风速获取为空
+2025-01-02 16:13:03,629-__main__-INFO-心跳websocket未连接
+2025-01-02 16:13:07,385-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 110] Connection timed out
+2025-01-02 16:13:08,638-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:13:10,794-__main__-INFO-风速获取为空
+2025-01-02 16:13:13,639-__main__-INFO-心跳websocket未连接
+2025-01-02 16:13:13,885-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:13:13,886-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:13:13,886-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:13:13,905-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:13:13,907-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:13:13,921-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:13:13,937-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:13:13,938-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:13:13,939-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:13:13,939-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:13:19,805-__main__-INFO-风速获取为空
+2025-01-02 16:13:23,649-__main__-INFO-心跳websocket未连接
+2025-01-02 16:13:26,411-__main__-INFO-[Config Ini]设置指令配置信息: openbar=2f10002000
+2025-01-02 16:13:26,415-__main__-INFO-[http.openbar]页面调用推杆打开
+2025-01-02 16:13:26,415-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:2f10002000
+2025-01-02 16:13:26,416-__main__-INFO-[OperateUtil.step_scene_bar_open_2f10002000]推杆打开-开始
+2025-01-02 16:13:27,405-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:13:28,422-__main__-INFO-[OperateUtil.step_scene_bar_open_2f10002000]推杆打开-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:13:28,426-__main__-INFO-[OperateUtil.step_scene_bar_open_2f10002000]推杆打开-结束,返回结果为:92f1
+2025-01-02 16:13:28,426-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:2f10002000,返回结果为:92f1
+2025-01-02 16:13:28,817-__main__-INFO-风速获取为空
+2025-01-02 16:13:33,660-__main__-INFO-心跳websocket未连接
+2025-01-02 16:13:37,829-__main__-INFO-风速获取为空
+2025-01-02 16:13:43,669-__main__-INFO-心跳websocket未连接
+2025-01-02 16:13:46,840-__main__-INFO-风速获取为空
+2025-01-02 16:13:53,678-__main__-INFO-心跳websocket未连接
+2025-01-02 16:13:55,849-__main__-INFO-风速获取为空
+2025-01-02 16:14:03,687-__main__-INFO-心跳websocket未连接
+2025-01-02 16:14:04,862-__main__-INFO-风速获取为空
+2025-01-02 16:14:08,640-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:14:13,697-__main__-INFO-心跳websocket未连接
+2025-01-02 16:14:13,875-__main__-INFO-风速获取为空
+2025-01-02 16:14:13,997-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:14:13,998-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:14:13,998-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:14:14,017-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:14:14,019-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:14:14,033-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:14:14,053-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:14:14,054-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:14:14,054-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:14:14,055-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:14:22,885-__main__-INFO-风速获取为空
+2025-01-02 16:14:23,706-__main__-INFO-心跳websocket未连接
+2025-01-02 16:14:25,428-__main__-INFO-[Config Ini]设置指令配置信息: closebar=2e13352372
+2025-01-02 16:14:25,432-__main__-INFO-[http.closebar]页面调用推杆夹紧
+2025-01-02 16:14:25,432-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:2e10002000
+2025-01-02 16:14:25,433-__main__-INFO-[OperateUtil.step_scene_bar_close_2e10002000]推杆夹紧-开始
+2025-01-02 16:14:27,438-__main__-INFO-[OperateUtil.step_scene_bar_close_2e10002000]推杆夹紧-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:14:27,441-__main__-INFO-[OperateUtil.step_scene_bar_close_2e10002000]推杆夹紧-结束,返回结果为:92e1
+2025-01-02 16:14:27,442-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:2e10002000,返回结果为:92e1
+2025-01-02 16:14:31,898-__main__-INFO-风速获取为空
+2025-01-02 16:14:33,714-__main__-INFO-心跳websocket未连接
+2025-01-02 16:14:40,910-__main__-INFO-风速获取为空
+2025-01-02 16:14:43,722-__main__-INFO-心跳websocket未连接
+2025-01-02 16:14:49,921-__main__-INFO-风速获取为空
+2025-01-02 16:14:53,729-__main__-INFO-心跳websocket未连接
+2025-01-02 16:14:58,932-__main__-INFO-风速获取为空
+2025-01-02 16:15:03,740-__main__-INFO-心跳websocket未连接
+2025-01-02 16:15:07,941-__main__-INFO-风速获取为空
+2025-01-02 16:15:08,697-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:15:13,749-__main__-INFO-心跳websocket未连接
+2025-01-02 16:15:14,105-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:15:14,106-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:15:14,107-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:15:14,125-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:15:14,127-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:15:14,141-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:15:14,157-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:15:14,158-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:15:14,158-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:15:14,159-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:15:16,954-__main__-INFO-风速获取为空
+2025-01-02 16:15:23,758-__main__-INFO-心跳websocket未连接
+2025-01-02 16:15:25,964-__main__-INFO-风速获取为空
+2025-01-02 16:15:33,768-__main__-INFO-心跳websocket未连接
+2025-01-02 16:15:34,977-__main__-INFO-风速获取为空
+2025-01-02 16:15:36,894-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 110] Connection timed out
+2025-01-02 16:15:43,777-__main__-INFO-心跳websocket未连接
+2025-01-02 16:15:43,988-__main__-INFO-风速获取为空
+2025-01-02 16:15:52,999-__main__-INFO-风速获取为空
+2025-01-02 16:15:53,785-__main__-INFO-心跳websocket未连接
+2025-01-02 16:15:56,913-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:16:02,012-__main__-INFO-风速获取为空
+2025-01-02 16:16:03,793-__main__-INFO-心跳websocket未连接
+2025-01-02 16:16:08,758-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:16:11,022-__main__-INFO-风速获取为空
+2025-01-02 16:16:13,801-__main__-INFO-心跳websocket未连接
+2025-01-02 16:16:14,217-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:16:14,218-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:16:14,219-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:16:14,233-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:16:14,235-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:16:14,257-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:16:14,274-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:16:14,274-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:16:14,275-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:16:14,276-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:16:20,034-__main__-INFO-风速获取为空
+2025-01-02 16:16:23,811-__main__-INFO-心跳websocket未连接
+2025-01-02 16:16:29,044-__main__-INFO-风速获取为空
+2025-01-02 16:16:33,822-__main__-INFO-心跳websocket未连接
+2025-01-02 16:16:38,058-__main__-INFO-风速获取为空
+2025-01-02 16:16:43,831-__main__-INFO-心跳websocket未连接
+2025-01-02 16:16:47,070-__main__-INFO-风速获取为空
+2025-01-02 16:16:53,841-__main__-INFO-心跳websocket未连接
+2025-01-02 16:16:56,082-__main__-INFO-风速获取为空
+2025-01-02 16:17:03,852-__main__-INFO-心跳websocket未连接
+2025-01-02 16:17:05,093-__main__-INFO-风速获取为空
+2025-01-02 16:17:08,818-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:17:13,861-__main__-INFO-心跳websocket未连接
+2025-01-02 16:17:14,105-__main__-INFO-风速获取为空
+2025-01-02 16:17:14,333-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:17:14,334-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:17:14,334-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:17:14,349-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:17:14,351-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:17:14,369-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:17:14,389-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:17:14,390-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:17:14,390-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:17:14,391-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:17:23,118-__main__-INFO-风速获取为空
+2025-01-02 16:17:23,870-__main__-INFO-心跳websocket未连接
+2025-01-02 16:17:32,130-__main__-INFO-风速获取为空
+2025-01-02 16:17:33,881-__main__-INFO-心跳websocket未连接
+2025-01-02 16:17:41,138-__main__-INFO-风速获取为空
+2025-01-02 16:17:43,890-__main__-INFO-心跳websocket未连接
+2025-01-02 16:17:50,150-__main__-INFO-风速获取为空
+2025-01-02 16:17:53,898-__main__-INFO-心跳websocket未连接
+2025-01-02 16:17:59,161-__main__-INFO-风速获取为空
+2025-01-02 16:18:03,905-__main__-INFO-心跳websocket未连接
+2025-01-02 16:18:06,398-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 110] Connection timed out
+2025-01-02 16:18:08,174-__main__-INFO-风速获取为空
+2025-01-02 16:18:08,877-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:18:13,915-__main__-INFO-心跳websocket未连接
+2025-01-02 16:18:14,451-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:18:14,452-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:18:14,452-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:18:14,473-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:18:14,475-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:18:14,489-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:18:14,505-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:18:14,506-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:18:14,506-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:18:14,507-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:18:36,811-__main__-INFO-[AutoChargeControl]===启动自动化充电功能线程===
+2025-01-02 16:18:36,813-__main__-INFO-开始启动websocket服务
+2025-01-02 16:18:36,813-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:18:36,815-__main__-INFO-第一次启动，无法连接websocket服务器，[Errno 101] Network is unreachable
+2025-01-02 16:18:36,816-__main__-INFO-需要启动心跳检测，休眠后启动
+2025-01-02 16:18:36,816-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:18:36,818-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 101] Network is unreachable
+2025-01-02 16:18:41,821-__main__-INFO-心跳websocket未连接
+2025-01-02 16:18:41,823-__main__-INFO-webclient已启动，启动webservice
+2025-01-02 16:18:41,825-__main__-INFO-启动485天气
+2025-01-02 16:18:41,829-__main__-INFO-启动天气线程
+2025-01-02 16:18:41,841-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:18:41,843-__main__-INFO-风速获取为空
+2025-01-02 16:18:41,846-__main__-INFO-[MQTT]禁用MQTT服务，无需启动
+2025-01-02 16:18:41,847-__main__-INFO-[InitHangar._init_updown_lift_state]初始化升降台状态-开始
+2025-01-02 16:18:41,848-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:730000
+2025-01-02 16:18:41,849-__main__-INFO-[OperateUtil.step_scene_state_updown_lift_730000]升降台状态获取-开始
+2025-01-02 16:18:41,850-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:18:41,853-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:18:41,854-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:18:41,885-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:18:41,902-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:18:41,937-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:18:41,957-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:18:41,957-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:18:41,957-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:18:41,958-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:18:43,851-__main__-INFO-[OperateUtil.step_scene_state_updown_lift_730000]升降台状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBWeather: [Errno 2] No such file or directory: '/dev/ttyUSBWeather'
+2025-01-02 16:18:43,851-__main__-INFO-[OperateUtil.step_scene_state_updown_lift_730000]升降台状态获取-结束,返回结果为:9731
+2025-01-02 16:18:43,852-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:730000,返回结果为:9731
+2025-01-02 16:18:43,854-__main__-INFO-[InitHangar._init_updown_lift_state]初始化升降台状态-结束,初始化失败,从配置文件中获取状态为:down
+2025-01-02 16:18:43,855-__main__-INFO-[InitHangar._init_turn_lift_state]初始化旋转台状态-开始
+2025-01-02 16:18:43,855-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:830000
+2025-01-02 16:18:43,857-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-开始
+2025-01-02 16:18:45,860-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:18:45,860-__main__-INFO-[OperateUtil.step_scene_get_lift_830000]旋转台状态获取-结束,返回结果为:9831
+2025-01-02 16:18:45,861-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:830000,返回结果为:9831
+2025-01-02 16:18:45,863-__main__-INFO-[InitHangar._init_turn_lift_state]串口初始化旋转台状态-结束,初始化失败,从配置文件中获取状态为:back
+2025-01-02 16:18:45,867-__main__-INFO-[InitHangar._init_hangar_version]初始化机库版本为:wk_nest_01
+2025-01-02 16:18:45,868-__main__-INFO-[InitHangar._init_hangar_door_state]初始化门状态-开始
+2025-01-02 16:18:45,869-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:170000
+2025-01-02 16:18:45,870-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-开始
+2025-01-02 16:18:47,851-__main__-INFO-风速获取为空
+2025-01-02 16:18:47,873-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:18:47,873-__main__-INFO-[OperateUtil.step_scene_door_state_170000]机库门状态获取-结束,返回结果为:9171
+2025-01-02 16:18:47,874-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:170000,返回结果为:9171
+2025-01-02 16:18:47,876-__main__-INFO-[InitHangar._init_hangar_door_state]串口初始化门状态-结束,初始化失败,从配置文件中获取状态为:close
+2025-01-02 16:18:47,876-__main__-INFO-[InitHangar._init_hangar_bar_state]初始化推杆状态-开始
+2025-01-02 16:18:47,877-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:2g0000
+2025-01-02 16:18:47,877-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-开始
+2025-01-02 16:18:49,880-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-异常,异常信息为:[Errno 2] could not open port /dev/ttyUSBDoor: [Errno 2] No such file or directory: '/dev/ttyUSBDoor'
+2025-01-02 16:18:49,881-__main__-INFO-[OperateUtil.step_scene_bar_state_2g0000]推杆状态获取-结束,返回结果为:92g1
+2025-01-02 16:18:49,881-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:2g0000,返回结果为:92g1
+2025-01-02 16:18:49,885-__main__-INFO-[InitHangar._init_hangar_bar_state]串口初始化推杆状态-结束,初始化失败,从配置文件中获取状态为:close
+2025-01-02 16:18:49,886-__main__-INFO-[机库启动]警示灯配置文件alarm:False,警示绿灯线程无需开启
+2025-01-02 16:18:49,887-__main__-INFO-服务开启，完成
+2025-01-02 16:18:51,829-__main__-INFO-心跳websocket未连接
+2025-01-02 16:18:53,858-__main__-INFO-风速获取为空
+2025-01-02 16:18:56,837-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:18:59,865-__main__-INFO-风速获取为空
+2025-01-02 16:19:01,837-__main__-INFO-心跳websocket未连接
+2025-01-02 16:19:05,869-__main__-INFO-风速获取为空
+2025-01-02 16:19:11,847-__main__-INFO-心跳websocket未连接
+2025-01-02 16:19:11,873-__main__-INFO-风速获取为空
+2025-01-02 16:19:17,880-__main__-INFO-风速获取为空
+2025-01-02 16:19:21,849-__main__-INFO-心跳websocket未连接
+2025-01-02 16:19:23,888-__main__-INFO-风速获取为空
+2025-01-02 16:19:29,893-__main__-INFO-风速获取为空
+2025-01-02 16:19:31,858-__main__-INFO-心跳websocket未连接
+2025-01-02 16:19:35,900-__main__-INFO-风速获取为空
+2025-01-02 16:19:36,873-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:19:41,865-__main__-INFO-心跳websocket未连接
+2025-01-02 16:19:41,908-__main__-INFO-风速获取为空
+2025-01-02 16:19:42,016-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:19:42,016-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:19:42,017-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:19:42,041-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:19:42,042-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:19:42,073-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:19:42,089-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:19:42,090-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:19:42,090-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:19:42,091-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:19:47,913-__main__-INFO-风速获取为空
+2025-01-02 16:19:51,873-__main__-INFO-心跳websocket未连接
+2025-01-02 16:19:53,920-__main__-INFO-风速获取为空
+2025-01-02 16:19:59,924-__main__-INFO-风速获取为空
+2025-01-02 16:20:01,881-__main__-INFO-心跳websocket未连接
+2025-01-02 16:20:05,926-__main__-INFO-风速获取为空
+2025-01-02 16:20:11,892-__main__-INFO-心跳websocket未连接
+2025-01-02 16:20:11,933-__main__-INFO-风速获取为空
+2025-01-02 16:20:17,940-__main__-INFO-风速获取为空
+2025-01-02 16:20:21,903-__main__-INFO-心跳websocket未连接
+2025-01-02 16:20:23,945-__main__-INFO-风速获取为空
+2025-01-02 16:20:29,953-__main__-INFO-风速获取为空
+2025-01-02 16:20:31,906-__main__-INFO-心跳websocket未连接
+2025-01-02 16:20:35,960-__main__-INFO-风速获取为空
+2025-01-02 16:20:36,882-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0
+2025-01-02 16:20:41,917-__main__-INFO-心跳websocket未连接
+2025-01-02 16:20:41,966-__main__-INFO-风速获取为空
+2025-01-02 16:20:42,149-__main__-INFO-[OperateUtil.operate_hangar]机库操作-开始,操作命令为:Check
+2025-01-02 16:20:42,149-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-开始
+2025-01-02 16:20:42,150-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-开始,命令为:Check,版本为:V4.0
+2025-01-02 16:20:42,165-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:20:42,166-__main__-INFO-发送命令--Check,before checking, current battery value is 0,state is close
+2025-01-02 16:20:42,185-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:20:42,205-__main__-INFO-SATA.SATACom,串口连接异常
+2025-01-02 16:20:42,205-__main__-INFO-[OperateUtil.exe_charge_command]执行电池命令-结束,命令为:Check,返回结果为:chargeerror(null)
+2025-01-02 16:20:42,206-__main__-INFO-[OperateUtil.step_scene_drone_check_ck0000]无人机状态检查-结束,返回结果为:9ck1
+2025-01-02 16:20:42,206-__main__-INFO-[OperateUtil.operate_hangar]机库操作-结束,操作命令为:Check,返回结果为:9ck1
+2025-01-02 16:20:47,973-__main__-INFO-风速获取为空
+2025-01-02 16:20:51,926-__main__-INFO-心跳websocket未连接
+2025-01-02 16:20:53,977-__main__-INFO-风速获取为空
+2025-01-02 16:20:59,984-__main__-INFO-风速获取为空
+2025-01-02 16:21:01,936-__main__-INFO-心跳websocket未连接
+2025-01-02 16:21:05,992-__main__-INFO-风速获取为空
+2025-01-02 16:21:06,881-__main__-ERROR-接收-web_socket创建失败，无法连接websocket服务器，[Errno 110] Connection timed out
+2025-01-02 16:21:11,945-__main__-INFO-心跳websocket未连接
+2025-01-02 16:21:11,997-__main__-INFO-风速获取为空
+2025-01-02 16:21:18,004-__main__-INFO-风速获取为空
+2025-01-02 16:21:21,953-__main__-INFO-心跳websocket未连接
+2025-01-02 16:21:24,009-__main__-INFO-风速获取为空
+2025-01-02 16:21:26,890-__main__-INFO---------------开始启动websocket服务-----------------
+2025-01-02 16:21:30,013-__main__-INFO-风速获取为空
+2025-01-02 16:21:31,964-__main__-INFO-心跳websocket未连接
+2025-01-02 16:21:36,021-__main__-INFO-风速获取为空
+2025-01-02 16:21:36,941-__main__-INFO-[AutoChargeControl.doAutoCharge]自动化充电流程-开始,run_auto_charge:0,uuid_str:,state:close,battery_value:0,charge_num:0

@@ -5,12 +5,17 @@ from threading import Thread
 from paho.mqtt import client as mqtt_client
 
 import BASEUtile.InitFileTool
-from BASEUtile import HangerState
+import BASEUtile.HangarState as HangarState
+import WFCharge.WFState as WFState
+import BASEUtile.OperateUtil as OperateUtil
+from ServerManager.websockets import WebSocketUtil
+
 from BASEUtile.logger import Logger
 
-logger = Logger(__name__)  # 日志记录
+# logger = Logger(__name__)  # 日志记录
 
-ini_serialNumber = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber")
+# ini_serialNumber = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber")
+ini_serialNumber = BASEUtile.InitFileTool.get_str_value("mqtt_info", "client_id")
 
 # 操控系统下发命令主题(通配表达式#会多捕获自己的应答，所以采用元组方式)
 topic_subscribe_list = [
@@ -35,8 +40,9 @@ topic_subscribe_list = [
 client_id = 'jiku-001'  # 客户端id
 
 client_publish = None  # 用于推送消息的客户端
-webclient = None  # websocket推送线程
-hangstate = None  # 机库状态信息
+webclient: WebSocketUtil = None  # websocket推送线程
+# hangstate = None  # 机库状态信息
+logger = None  # 日志对象
 
 '''
 关于qos设置，考虑我们场景，应该统一为2
@@ -69,19 +75,25 @@ def connect_mqtt() -> mqtt_client:
     while not is_run:
         try:
             # 从ini中读取运行配置信息
-            host_str = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost")
-            port_int = BASEUtile.InitFileTool.get_int_value("mqtt_edit_info", "mqttPort")
-            username = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName")
-            password = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            # host_str = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost")
+            # port_int = BASEUtile.InitFileTool.get_int_value("mqtt_edit_info", "mqttPort")
+            # username = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName")
+            # password = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            host_str = BASEUtile.InitFileTool.get_str_value("mqtt_info", "host_str")
+            port_int = BASEUtile.InitFileTool.get_int_value("mqtt_info", "port_int")
+            username = BASEUtile.InitFileTool.get_str_value("mqtt_info", "username_str")
+            password = BASEUtile.InitFileTool.get_str_value("mqtt_info", "password_str")
 
             global client_id
-            client_id = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber")
+            # client_id = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber")
+            client_id = BASEUtile.InitFileTool.get_str_value("mqtt_info", "client_id")
 
             logger.get_log().info(
                 f"[MQTT]启动创建MQTT链接，登录MTQQ服务器客户端ID:[{client_id}] 服务IP:[{host_str}] 服务POST:[{port_int}] 登录账户名:[{username}] 登录密码:[{password}] 订阅主题:[{topic_subscribe_list}]  ")
             client = mqtt_client.Client(client_id)
             client.on_connect = on_connect
             client.on_connect_fail = on_connect_fail
+            client.reconnect_delay_set(min_delay=10, max_delay=120)
             # client.username_pw_set("admin", "password")
             client.username_pw_set(username, password)  # 账户密码
             # broker = 'broker.emqx.io'
@@ -219,14 +231,14 @@ def subscribe(client: mqtt_client):
 
 
 def publish(topic_publish, message):
-    logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
+    # logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
     global client_publish
-    if client_publish is None:
-        time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
-    logger.get_log().info(f"[MQTT][publish]执行下发消息:{message}")
-    result = client_publish.publish(topic_publish, message, qos=2)
-    status = result[0]
-    logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
+    if client_publish is not None:
+        # time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
+        logger.get_log().info(f"[MQTT][publish]执行下发消息,主题：{topic_publish},消息:{message}")
+        result = client_publish.publish(topic_publish, message, qos=0)
+        status = result[0]
+        logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
 
 
 def publish_debug_log(topic_publish, message):
@@ -274,14 +286,14 @@ def run_7004():
             time.sleep(10)  # 异常后晚10秒启动推送，给MQTT链接创造时间
 
 
-def start_mqtt_thread_dx(web_client, hang_state):
-    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
+def start_mqtt_thread_dx(web_client, logger_in):
+    global logger
+    logger = logger_in
     global webclient
     webclient = web_client
-    global hangstate
-    hangstate = hang_state
-    # print(f"hangstate.getHangerState={hangstate.getHangerState()}")
-    # print(f"hangstate.get_state_dict()={hangstate.get_state_dict()}")
+    # global hangstate
+    # hangstate = HangarState
+    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
     thread = Thread(target=run, args=([]), daemon=True)
     thread.start()
     logger.get_log().info("[MQTT] 启动 MQTT 主接收发送任务线程 [完成]")
@@ -338,7 +350,7 @@ def do_code_1001(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_door_open_140000()
+    result = OperateUtil.operate_hangar("140000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -367,7 +379,7 @@ def do_code_1002(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_door_close_150000()
+    result = OperateUtil.operate_hangar("150000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -397,7 +409,7 @@ def do_code_1003(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用hangstate获取状态
-    flag = hangstate.get_hanger_door()
+    flag = HangarState.get_hangar_door_state()
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{flag}]")
     if flag == "open":
         respMsg = result_msg_open
@@ -430,7 +442,7 @@ def do_code_2001(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_bar_close_2e10002000()
+    result = OperateUtil.operate_hangar("2e10002000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -459,7 +471,7 @@ def do_code_2002(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_bar_reset_500000()
+    result = OperateUtil.operate_hangar("500000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -489,7 +501,7 @@ def do_code_2003(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用hangstate获取状态
-    flag = hangstate.get_hanger_bar()
+    flag = HangarState.get_hangar_bar_state()
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{flag}]")
     if flag == "open":
         respMsg = result_msg_open
@@ -522,7 +534,7 @@ def do_code_3001(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_air_open_300000()
+    result = OperateUtil.operate_hangar("300000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -551,7 +563,7 @@ def do_code_3002(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_air_close_310000()
+    result = OperateUtil.operate_hangar("310000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -581,7 +593,7 @@ def do_code_3003(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用hangstate获取状态
-    flag = hangstate.get_air_condition()
+    flag = HangarState.get_air_condition_state()
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{flag}]")
     if flag == "open":
         respMsg = result_msg_open
@@ -701,7 +713,7 @@ def do_code_5001(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_drone_charge_cp0000()
+    result = OperateUtil.operate_hangar("cp0000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -730,7 +742,7 @@ def do_code_5002(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_drone_standby_sb0000()
+    result = OperateUtil.operate_hangar("sb0000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -761,7 +773,7 @@ def do_code_5003(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用hangstate获取状态
-    flag = hangstate.get_wfcstate()
+    flag = WFState.get_battery_state()
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{flag}]")
     # ***注意，这里沟通后认为，只要不是充电中或已充满，就都是未充电，没有异常情况
     if flag == "charging":
@@ -799,7 +811,7 @@ def do_code_6001(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_drone_takeoff_dt0000()
+    result = OperateUtil.operate_hangar("dt0000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -828,7 +840,7 @@ def do_code_6002(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.step_scene_drone_off_dd0000()
+    result = OperateUtil.operate_hangar("dd0000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -845,17 +857,28 @@ def do_code_7001():
         "msgCode": "7001",
         "msgExplain": "方舱信息",
         "data": {
-            "serialNumber": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber"),
-            "type": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "type"),
-            "adapter": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adapter"),
-            "adress": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adress"),
-            "alternatePoint": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "alternatePoint"),
-            "doorSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "doorSpeed"),
-            "centerSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "centerSpeed"),
-            "mqttHost": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost"),
-            "mqttPort": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPort"),
-            "mqttUserName": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName"),
-            "mqttPassWord": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            # "serialNumber": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber"),
+            "serialNumber": BASEUtile.InitFileTool.get_str_value("mqtt_info", "client_id"),
+            # "type": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "type"),
+            # "adapter": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adapter"),
+            # "adress": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adress"),
+            # "alternatePoint": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "alternatePoint"),
+            # "doorSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "doorSpeed"),
+            # "centerSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "centerSpeed"),
+            "type": BASEUtile.InitFileTool.get_str_value("dianxin_info", "type"),
+            "adapter": BASEUtile.InitFileTool.get_str_value("dianxin_info", "adapter"),
+            "adress": BASEUtile.InitFileTool.get_str_value("dianxin_info", "adress"),
+            "alternatePoint": BASEUtile.InitFileTool.get_str_value("dianxin_info", "alternatePoint"),
+            "doorSpeed": BASEUtile.InitFileTool.get_str_value("dianxin_info", "doorSpeed"),
+            "centerSpeed": BASEUtile.InitFileTool.get_str_value("dianxin_info", "centerSpeed"),
+            # "mqttHost": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost"),
+            # "mqttPort": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPort"),
+            # "mqttUserName": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName"),
+            # "mqttPassWord": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            "mqttHost": BASEUtile.InitFileTool.get_str_value("mqtt_info", "host_str"),
+            "mqttPort": BASEUtile.InitFileTool.get_str_value("mqtt_info", "port_int"),
+            "mqttUserName": BASEUtile.InitFileTool.get_str_value("mqtt_info", "username_str"),
+            "mqttPassWord": BASEUtile.InitFileTool.get_str_value("mqtt_info", "password_str")
         }
     }
     result_json = json.dumps(result_message, ensure_ascii=False)
@@ -883,17 +906,28 @@ def do_code_7002(msg_topic, msgCode, data):
 
     try:
         section_name = "mqtt_edit_info"
-        BASEUtile.InitFileTool.set_value(section_name, "serialNumber", data["serialNumber"])
-        BASEUtile.InitFileTool.set_value(section_name, "type", data["type"])
-        BASEUtile.InitFileTool.set_value(section_name, "adapter", data["adapter"])
-        BASEUtile.InitFileTool.set_value(section_name, "adress", data["adress"])
-        BASEUtile.InitFileTool.set_value(section_name, "alternatePoint", data["alternatePoint"])
-        BASEUtile.InitFileTool.set_value(section_name, "doorSpeed", data["doorSpeed"])
-        BASEUtile.InitFileTool.set_value(section_name, "centerSpeed", data["centerSpeed"])
-        BASEUtile.InitFileTool.set_value(section_name, "mqttHost", data["mqttHost"])
-        BASEUtile.InitFileTool.set_value(section_name, "mqttPort", data["mqttPort"])
-        BASEUtile.InitFileTool.set_value(section_name, "mqttUserName", data["mqttUserName"])
-        BASEUtile.InitFileTool.set_value(section_name, "mqttPassWord", data["mqttPassWord"])
+        # BASEUtile.InitFileTool.set_value(section_name, "serialNumber", data["serialNumber"])
+        # BASEUtile.InitFileTool.set_value(section_name, "type", data["type"])
+        # BASEUtile.InitFileTool.set_value(section_name, "adapter", data["adapter"])
+        # BASEUtile.InitFileTool.set_value(section_name, "adress", data["adress"])
+        # BASEUtile.InitFileTool.set_value(section_name, "alternatePoint", data["alternatePoint"])
+        # BASEUtile.InitFileTool.set_value(section_name, "doorSpeed", data["doorSpeed"])
+        # BASEUtile.InitFileTool.set_value(section_name, "centerSpeed", data["centerSpeed"])
+        # BASEUtile.InitFileTool.set_value(section_name, "mqttHost", data["mqttHost"])
+        # BASEUtile.InitFileTool.set_value(section_name, "mqttPort", data["mqttPort"])
+        # BASEUtile.InitFileTool.set_value(section_name, "mqttUserName", data["mqttUserName"])
+        # BASEUtile.InitFileTool.set_value(section_name, "mqttPassWord", data["mqttPassWord"])
+        BASEUtile.InitFileTool.set_value("mqtt_info", "client_id", data["serialNumber"])
+        BASEUtile.InitFileTool.set_value("dianxin_info", "type", data["type"])
+        BASEUtile.InitFileTool.set_value("dianxin_info", "adapter", data["adapter"])
+        BASEUtile.InitFileTool.set_value("dianxin_info", "adress", data["adress"])
+        BASEUtile.InitFileTool.set_value("dianxin_info", "alternatePoint", data["alternatePoint"])
+        BASEUtile.InitFileTool.set_value("dianxin_info", "doorSpeed", data["doorSpeed"])
+        BASEUtile.InitFileTool.set_value("dianxin_info", "centerSpeed", data["centerSpeed"])
+        BASEUtile.InitFileTool.set_value("mqtt_info", "host_str", data["mqttHost"])
+        BASEUtile.InitFileTool.set_value("mqtt_info", "port_int", data["mqttPort"])
+        BASEUtile.InitFileTool.set_value("mqtt_info", "username_str", data["mqttUserName"])
+        BASEUtile.InitFileTool.set_value("mqtt_info", "password_str", data["mqttPassWord"])
     except Exception as e:
         logger.get_log().error(f"[MQTT]执行指令[{code}]过程中发生异常[{e}]")
         respCode = result_code_error
@@ -905,17 +939,17 @@ def do_code_7002(msg_topic, msgCode, data):
 
 def do_code_7004():
     topic_publish = f"uavshelter/devicecontral/{ini_serialNumber}/status"  # 该接口的应答主题
-    shelterdoor_result = hangstate.get_hanger_door()
+    shelterdoor_result = HangarState.get_hangar_door_state()
     shelterdoor = "已关闭"
     if shelterdoor_result == "open":
         shelterdoor = "已打开"
 
-    centerdevice_result = hangstate.get_hanger_bar()
+    centerdevice_result = HangarState.get_hangar_bar_state()
     centerdevice = "已归中"
     if centerdevice_result == "open":
         centerdevice = "已复位"
 
-    chargingdevice_result = hangstate.get_wfcstate()
+    chargingdevice_result = WFState.get_battery_state()
     # chargingdevice_value = hangstate.get_wfc_battery_value()
     chargingdevice = "未充电"
     if chargingdevice_result == "charging":
@@ -925,9 +959,9 @@ def do_code_7004():
 
     # airconditioner = str(hangstate.indoor_tem())
     # weatherstation_temperature = str(hangstate.get_temperature())
-    weatherstation_windvelocity = hangstate.get_windspeed()
+    weatherstation_windvelocity = HangarState.get_wind_speed_value()
 
-    weatherstation_winddirection_result = hangstate.get_winddirection()
+    weatherstation_winddirection_result = HangarState.get_wind_direction_value()
     if weatherstation_winddirection_result == "北风":
         weatherstation_winddirection = "North"
     elif weatherstation_winddirection_result == "东北风":
@@ -992,7 +1026,7 @@ def do_code_8001(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.big_scene_A000()
+    result = OperateUtil.operate_hangar("A000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -1050,7 +1084,7 @@ def do_code_8003(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.big_scene_B000()
+    result = OperateUtil.operate_hangar("B000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -1108,7 +1142,7 @@ def do_code_8005(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库
-    result = webclient.big_scene_B100()
+    result = OperateUtil.operate_hangar("B100")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error
@@ -1166,7 +1200,7 @@ def do_code_9001(msg_topic, msgCode):
         return
     logger.get_log().info(f"[MQTT]执行指令[{code}][开始]")
     # 调用webclient控制端操控机库  PS:经过讨论确定，只复位推杆，不动机库门，怕关门夹到无人机
-    result = webclient.step_scene_bar_reset_500000()
+    result = OperateUtil.operate_hangar("500000")
     logger.get_log().info(f"[MQTT]执行指令[{code}][结束]底层下位机接口应答结果[{result}]")
     if not result.endswith("0"):
         respCode = result_code_error

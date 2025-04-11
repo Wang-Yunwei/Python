@@ -44,12 +44,30 @@
             {% if mqtt_type=="dianxin" %}
                 <select name="mqtt_type" class="form-control">
                     <option selected="selected" value="dianxin">电信定制版</option>
-                    <option value="selfmqtt">自有协议</option>
+                    <option  value="jiangsudx">江苏电信定制版</option>
+                    <option  value="hubeidianli">湖北电力定制版</option>
+                    <option  value="nanfangdianwang">南方电网定制版</option>
                 </select>
-            {% else %}
+            {% elif  mqtt_type=="jiangsudx" %}
                 <select name="mqtt_type" class="form-control">
-                    <option value="dianxin">电信定制版(此处MQTT配置不再生效)</option>
-                    <option selected="selected" value="selfmqtt">自有协议</option>
+                    <option  value="dianxin">电信定制版</option>
+                    <option selected="selected" value="jiangsudx">江苏电信定制版</option>
+                    <option  value="hubeidianli">湖北电力定制版</option>
+                    <option  value="nanfangdianwang">南方电网定制版</option>
+                </select>
+            {% elif  mqtt_type=="hubeidianli" %}
+                <select name="mqtt_type" class="form-control">
+                    <option  value="dianxin">电信定制版</option>
+                    <option  value="jiangsudx">江苏电信定制版</option>
+                    <option  selected="selected" value="hubeidianli">湖北电力定制版</option>
+                    <option  value="nanfangdianwang">南方电网定制版</option>
+                </select>
+            {% elif  mqtt_type=="nanfangdianwang" %}
+                <select name="mqtt_type" class="form-control">
+                    <option  value="dianxin">电信定制版</option>
+                    <option  value="jiangsudx">江苏电信定制版</option>
+                    <option  value="hubeidianli">湖北电力定制版</option>
+                    <option  selected="selected" value="nanfangdianwang">南方电网定制版</option>
                 </select>
             {% endif %}
         </div>

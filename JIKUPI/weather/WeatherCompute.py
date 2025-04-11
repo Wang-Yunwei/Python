@@ -14,13 +14,16 @@ import time
 import struct
 
 import AirCondition
-from AirCondition.AirConditionComputer import AirConditionOper
-from BASEUtile.HangerState import HangerState
+from AirCondition.AirConditionComputer import AirConditionComputer
+import BASEUtile.HangarState as HangarState
 from BASEUtile.logger import Logger
-from ConfigIni import ConfigIni
 from SATA.SATACom import JKSATACOM
-from USBDevice.USBDeviceConfig import USBDeviceConfig
-from WFCharge.WFState import WFState
+import USBDevice.USBDeviceConfig as USBDeviceConfig
+# from WFCharge.WFState import WFState
+import SerialUsedStateFlag as SerialUsedStateFlag
+import BASEUtile.Config as Config
+import BASEUtile.OperateUtil as OperateUtil
+from weather.TempHumController import TempHumController
 
 
 class WeatherInfo485():
@@ -33,13 +36,12 @@ class WeatherInfo485():
     #     self.logger=log
     #     self.wait_time=30#等待30秒获取一次GPS数据
 
-    def __init__(self,state,log,comstate_flag,configini):
-        self.state = state
+    def __init__(self,log):
+        # self.state = state
         self.logger = log
         self.wait_time = 10  # 等待3秒获取一次气象信息，并推送给到web平台
-        self.configini=configini
-        self.comstate_flag = comstate_flag  # 串口标识
-        self.comconfig=USBDeviceConfig(self.configini)
+        self.comstate_flag = SerialUsedStateFlag  # 串口标识
+        # self.comconfig=USBDeviceConfig()
         self.auto_air_state=False #是否下雨天自动关闭的空调，如果是，晴天的时候需要自动开启空调
 
     def hex_to_float(self,h):
@@ -75,8 +77,8 @@ class WeatherInfo485():
         self.logger.get_log().info("启动天气线程")
         #启动获取GPS信息的线程
         statCom_wea = None
-        statCom_wea = JKSATACOM(self.state, self.comconfig.get_device_info_weather(), self.comconfig.get_bps_weather(), self.comconfig.get_timeout_weather(),
-                                self.logger,None)
+        statCom_wea = JKSATACOM(USBDeviceConfig.get_serial_usb_weather(), USBDeviceConfig.get_serial_bps_weather(), USBDeviceConfig.get_serial_timeout_weather(),
+                                self.logger, None)
         winddir="北" #推送风向，没有获取到数据显示北，正常显示北风
         windspeed=0 #推送的风速，异常返回-1
         temperature=0.0 #温度
@@ -99,13 +101,13 @@ class WeatherInfo485():
         rain_clear_num=0
         while True:
             try:
-                self.wait_time=int(self.configini.get_weather_wait_time())
+                self.wait_time=int(Config.get_weather_wait_time())
                 #self.logger.get_log().info("启动天气线程")
                 if statCom_wea==None:
                     self.logger.get_log().info("--------------创建天气串口---------------------")
-                    statCom_wea = JKSATACOM(self.state, self.comconfig.get_device_info_weather(), self.comconfig.get_bps_weather(), self.comconfig.get_timeout_weather(),
-                                self.logger,None)
-                if self.configini.get_wind_dir()==True and self.comstate_flag.get_weather_isused()==False:
+                    statCom_wea = JKSATACOM(USBDeviceConfig.get_serial_usb_weather(), USBDeviceConfig.get_serial_bps_weather(), USBDeviceConfig.get_serial_timeout_weather(),
+                                            self.logger, None)
+                if Config.get_is_wind_dir()==True and self.comstate_flag.get_is_used_serial_weather()==False:
                     #----------------风向操作----------------
                     #time.sleep(2)
                     statCom_wea.engine.Open_Engine()  # 打开串口
@@ -118,7 +120,7 @@ class WeatherInfo485():
                         pass
                     else:
                         if len(result_winddir) == 0:
-                           self.state.set_winddirection("北")
+                           HangarState.set_wind_direction_value("北")
                         else:
                             data_winddir = binascii.b2a_hex(result_winddir[3:5]).decode('ascii')#获取风向数值
                             #风向的处理
@@ -143,9 +145,9 @@ class WeatherInfo485():
                             else:
                                 winddir="北"
                             #结果推送
-                            self.state.set_winddirection(f"{winddir}")
+                            HangarState.set_wind_direction_value(f"{winddir}")
                             #print(f"风向:{winddir}")
-                if self.configini.get_wind()==True and self.comstate_flag.get_weather_isused()==False:
+                if Config.get_is_wind()==True and self.comstate_flag.get_is_used_serial_weather()==False:
                     # ----------------风速操作----------------
                     #time.sleep(2)
                     statCom_wea.engine.Open_Engine()  # 打开串口
@@ -156,12 +158,12 @@ class WeatherInfo485():
                     result_windspeed = bytes.fromhex(self.hexShow(result_windspeed))
                     if result_windspeed == b'':
                         self.logger.get_log().info(f"风速获取为空")
-                        self.state.set_windspeed(f"{0.0}")
+                        HangarState.set_wind_speed_value(f"{0.0}")
                         pass
                     else:
                         if len(result_windspeed) == 0:
                             self.logger.get_log().info(f"风速获取为空")
-                            self.state.set_windspeed(f"{0.0}")
+                            HangarState.set_wind_speed_value(f"{0.0}")
                         else:
                             data_windspeed = binascii.b2a_hex(result_windspeed[3:5]).decode('ascii')
                             # 风的处理
@@ -172,10 +174,10 @@ class WeatherInfo485():
                                 #windspeed=-1
                                 self.logger.get_log().info(f"风速获取异常，{windspeed}")
                                 windspeed=round(random.random()*5,2)
-                            self.state.set_windspeed(f"{windspeed}")
+                            HangarState.set_wind_speed_value(f"{windspeed}")
                             self.logger.get_log().info(f"风speed:{windspeed}")
                             #print(f"风speed:{windspeed}")
-                if self.configini.get_tem_hum()==True and self.comstate_flag.get_weather_isused()==False:
+                if Config.get_is_temp_hum()==True and self.comstate_flag.get_is_used_serial_weather()==False:
                     # ----------------温度、湿度操作----------------
                     #time.sleep(2)
                     statCom_wea.engine.Open_Engine()  # 打开串口
@@ -188,8 +190,8 @@ class WeatherInfo485():
                         pass
                     else:
                         if len(result_temper_humidity) == 0:
-                            self.state.set_temperature("0.0")
-                            self.state.set_humidity("0.0")
+                            HangarState.set_temperature_value("0.0")
+                            HangarState.set_humidity_value("0.0")
                         else:
                             # 湿度的处理
                             data_humidity = binascii.b2a_hex(result_temper_humidity[3:5]).decode('ascii')
@@ -201,15 +203,15 @@ class WeatherInfo485():
                             temperature=self.get_num_f_h(data_temperature)
                             #print(f"{temperature} 温度转换后获取值")
                             # 结果推送
-                            self.state.set_humidity(f"{humidity/10}")
-                            self.state.set_temperature(f"{temperature/10}")
-                            self.state.set_pressure(f"{int(data_pressure,16)/10}")
+                            HangarState.set_humidity_value(f"{humidity / 10}")
+                            HangarState.set_temperature_value(f"{temperature / 10}")
+                            HangarState.set_pressure_value(f"{int(data_pressure, 16) / 10}")
                             print(f"湿度：{humidity/10} ")
                             print(f"温度：{temperature/10} ")
                             print(f"大气压强为：{int(data_pressure,16)/10} Kpa")
                             #print(f"temperature:{temperature/10} ℃")
                             #print(f"humidity:{humidity/10}% RH")
-                if self.configini.get_rain()==True and self.comstate_flag.get_weather_isused()==False:
+                if Config.get_is_rain()==True and self.comstate_flag.get_is_used_serial_weather()==False:
                     # ---------------是否有雨操作----------------
                     #time.sleep(2)
                     statCom_wea.engine.Open_Engine()  # 打开串口
@@ -219,11 +221,11 @@ class WeatherInfo485():
                     statCom_wea.engine.Close_Engine()
                     result_rainable = bytes.fromhex(self.hexShow(result_rainable))
                     if result_rainable == b'':
-                        self.state.set_rain(f"{0}")
+                        HangarState.set_is_rain_state(f"{0}")
                         pass
                     else:
                         if len(result_rainable) == 0:
-                            self.state.set_rain("-1")
+                            HangarState.set_is_rain_state("-1")
                         else:
                             data_rain = binascii.b2a_hex(result_rainable[3:5]).decode('ascii')
                             # 雨雪的处理
@@ -231,21 +233,20 @@ class WeatherInfo485():
                             # 结果推送
                             if rainable not in [0,1]:
                                 rainable=-1
-                            self.state.set_rain(f"{rainable}")
+                            HangarState.set_is_rain_state(f"{rainable}")
                             #2023-9-20 如果下雨的情况下，空调在开启的情况下关闭空调操作
                             try:
-                                if self.state.get_air_condition()=="open" and rainable==1:#关闭空调操作
-                                    airController=AirConditionOper(self.state.get_airstate(), self.state, self.comconfig, self.logger)
-                                    airController.closeAircondition()
+                                if HangarState.get_air_condition_state()== "open" and rainable==1:#关闭空调操作
+                                    # 关闭空调
+                                    OperateUtil.operate_hangar("310000")
                                     self.auto_air_state=True
-                                elif self.state.get_air_condition()=="close" and rainable==0 and self.auto_air_state==True:#打开空调操作,晴天、空调关闭并且是下雨天关闭的
-                                    airController = AirConditionOper(self.state.get_airstate(), self.state,
-                                                                     self.comconfig, self.logger)
-                                    airController.openAircondition()
+                                elif HangarState.get_air_condition_state()== "close" and rainable==0 and self.auto_air_state==True:#打开空调操作,晴天、空调关闭并且是下雨天关闭的
+                                    # 打开空调
+                                    OperateUtil.operate_hangar("300000")
                                     self.auto_air_state = False
                             except Exception as ariex:
                                 self.logger.get_log().info(f"有雨的时候关闭空调操作异常:{ariex}")
-                if self.configini.get_rain_num()==True and self.comstate_flag.get_weather_isused()==False:
+                if Config.get_is_rain_num()==True and self.comstate_flag.get_is_used_serial_weather()==False:
                     # ---------------降雨量操作----------------
                     #time.sleep(2)
                     statCom_wea.engine.Open_Engine()  # 打开串口
@@ -258,14 +259,14 @@ class WeatherInfo485():
                         pass
                     else:
                         if len(result_rainfall) == 0:
-                            self.state.set_rainfall("0")
+                            HangarState.set_rain_fall_value("0")
                         else:
                             data_rainfall = binascii.b2a_hex(result_rainfall[3:5]).decode('ascii')
                             #print(f"{data_rainfall} 降雨量串口获取值")
                             # 降雨量的处理
                             data_rf=int(data_rainfall,16)
                             # 结果推送
-                            self.state.set_rainfall(f"{data_rf/10}")
+                            HangarState.set_rain_fall_value(f"{data_rf / 10}")
                             print(f"降雨量:{data_rf} mm")
                     if rain_clear_num==60:
                         #清空雨量
@@ -278,7 +279,7 @@ class WeatherInfo485():
                         rain_clear_num=0
                     else:
                         rain_clear_num+=1
-                if self.configini.get_smoke()==True and self.comstate_flag.get_weather_isused()==False:
+                if Config.get_is_smoke()==True and self.comstate_flag.get_is_used_serial_weather()==False:
                     # ---------------烟雾操作----------------
                     #time.sleep(2)
                     statCom_wea.engine.Open_Engine()  # 打开串口
@@ -293,16 +294,16 @@ class WeatherInfo485():
                         pass
                     else:
                         if len(result_smoke) == 0:
-                            self.state.set_smoke("0")
+                            HangarState.set_smoke_value("0")
                         else:
                             data_smoke = binascii.b2a_hex(result_smoke[3:5]).decode('ascii')
                             #print(f"{data_smoke} 烟感串口获取值")
                             # 烟雾的处理
                             data_s=int(data_smoke,16)
                             # 结果推送
-                            self.state.set_smoke(f"{data_s}")
+                            HangarState.set_smoke_value(f"{data_s}")
                 #机库内温湿度读取
-                if self.configini.get_indoor_temp()== True and self.comstate_flag.get_weather_isused()==False:
+                if Config.get_is_indoor_temp()== True and self.comstate_flag.get_is_used_serial_weather()==False:
                     # ---------------机库内温湿度读取操作----------------
                     #time.sleep(2)
                     statCom_wea.engine.Open_Engine()  # 打开串口
@@ -317,7 +318,6 @@ class WeatherInfo485():
                         pass
                     else:
                         if len(result_indoor_tem) == 0:
-                            #self.state.set_indoor_tem("0")
                             print(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}机库内温湿度串口获取值长度为空")
                         else:
                             indoor_tem=binascii.b2a_hex(result_indoor_tem[3:5]).decode('ascii')
@@ -325,9 +325,13 @@ class WeatherInfo485():
                             data_tem = int(indoor_tem, 16)
                             data_hum=int(indoor_hum, 16)
                             # 结果推送
-                            self.state.set_indoor_tem(f"{round(data_tem*0.1,1)}")
-                            self.state.set_indoor_hum(f"{round(data_hum * 0.1,1)}")
-                            print(f"{self.state.getHangerState()}")
+                            HangarState.set_indoor_tem_value(f"{round(data_tem * 0.1, 1)}")
+                            HangarState.set_indoor_hum_value(f"{round(data_hum * 0.1, 1)}")
+                            print(f"{HangarState.get_hangar_state()}")
+                if Config.get_is_parking_temp_hum() is True and self.comstate_flag.get_is_used_serial_weather() is False:
+                    # ---------------停机坪温湿度读取操作----------------
+                    tempHumController = TempHumController(self.logger)
+                    tempHumController.get_temp_hum()
                 time.sleep(self.wait_time) #有此操作，信号获取数据稳定
             except Exception as e:
                 self.logger.get_log().info(f"Weather异常：{e}")
@@ -337,12 +341,13 @@ class WeatherInfo485():
 
 
 if __name__ == "__main__":
-    logger = Logger(__name__)  # 日志记录
-    wfcstate = WFState()
-    hangstate = HangerState(wfcstate)
-    configini=ConfigIni()
-    ws = WeatherInfo485(hangstate,logger,configini)
-    # #启用一个线程
-    th = threading.Thread(target=ws.start_get_weather(), args=())
-    th.start()
-    th.join()  # 等待子进程结束
+    # logger = Logger(__name__)  # 日志记录
+    pass
+    # wfcstate = WFState()
+    # hangstate = HangarState(wfcstate)
+    # configini=ConfigIni()
+    # ws = WeatherInfo485(hangstate,logger,configini)
+    # # #启用一个线程
+    # th = threading.Thread(target=ws.start_get_weather(), args=())
+    # th.start()
+    # th.join()  # 等待子进程结束

@@ -1,25 +1,26 @@
 import uuid
 import time
 
-from USBDevice.USBDeviceConfig import USBDeviceConfig
-from WFCharge.JCCServer import M300JCCServer
-from WFCharge.JCCServerSend import M300JCCServerSender
-from WFCharge.JCCServerV2 import M300JCCServerV2
-from WFCharge.JCCServerV3 import M300JCCServerV3
+from WFCharge.JCCServerM300 import JCCServerM300
+from WFCharge.JCCServerM300Sender import JCCServerM300Sender
+from WFCharge.JCCServerV2M300 import JCCServerV2M300
+from WFCharge.JCCServerV3M300 import JCCServerV3M300
 from WFCharge.WFCServer import WFCServer
 from WFCharge.WFCServerV2 import WFCServerV2
 from WFCharge.WFCServerV2Sender import WFCServerV2Sender
+import SerialUsedStateFlag as SerialUsedStateFlag
+import WFCharge.WFState as WFState
+import BASEUtile.Config as Config
 
 
 class AutoChargeControlV1(object):
-    def __init__(self, logger, wf_state, comstate_flag, configini, hangstate):
+    def __init__(self, logger):
         # 外部传入
         self.logger = logger  # 日志对象
-        self.wf_state = wf_state  # 充电状态 WFState()
-        self.comstate_flag = comstate_flag  # 串口使用标记
-        self.configini = configini  # 全局配置
-        self.hangstate = hangstate  # 追加状态参数
-        self.comconfig = USBDeviceConfig(self.configini)
+        # self.wf_state = wf_state  # 充电状态 WFState()
+        self.comstate_flag = SerialUsedStateFlag  # 串口使用标记
+        # self.hangstate = hangstate  # 追加状态参数
+        # self.comconfig = USBDeviceConfig
         #  内部参数
         self.run_auto_charge = 0  # 是否启动自动化充电流程 0:否 1:是 (默认0:否)
         self.fly_back = -1  # 是否飞机飞回 -1:未知 0:否 1:是 (默认-1:未知)
@@ -53,7 +54,7 @@ class AutoChargeControlV1(object):
         self.charge_num = 0
 
     def reset_battery_value(self):
-        self.wf_state.set_battery_value(0)
+        WFState.set_battery_value(0)
 
     def one_time_charge_error(self):
         self.charge_num = self.charge_num + 1
@@ -72,7 +73,7 @@ class AutoChargeControlV1(object):
         # self.wait_charge_time = 15  # 执行充电间隔时间 默认900秒 15分钟
         while True:
             try:
-                if self.configini.need_auto_charge:
+                if Config.get_is_need_auto_charge():
                     self.logger.get_log().info(f"[AutoChargeControl]===启用自动化充电功能===")
                     self.doAutoCharge()
                 else:
@@ -86,7 +87,7 @@ class AutoChargeControlV1(object):
     def doAutoCharge(self):
         try:
             self.logger.get_log().debug(
-                f"自动化充电流程执行 run_auto_charge = {self.run_auto_charge} fly_back = {self.fly_back} uuid_str = {self.uuid_str}  state = {self.wf_state.get_state()} battery_value = {self.wf_state.get_battery_value()} charge_num = {self.charge_num}")
+                f"自动化充电流程执行 run_auto_charge = {self.run_auto_charge} fly_back = {self.fly_back} uuid_str = {self.uuid_str}  state = {WFState.get_battery_state()} battery_value = {WFState.get_battery_value()} charge_num = {self.charge_num}")
             if self.run_auto_charge == 1:#启动充电
                 if self.fly_back == 1:#飞机返回
                     self.logger.get_log().debug(f"[AutoChargeControl][是否飞机飞回状态]状态 是 -继续")
@@ -144,8 +145,8 @@ class AutoChargeControlV1(object):
 
     def isNeedCharge(self):
         is_charge = False  # 是否需要充电
-        state = self.wf_state.get_state()  # 当前充电状态，close/charging/standby/takeoff/outage/cool
-        battery_value = self.wf_state.get_battery_value()  # 电池电量, 0/1/2/3/4/100 满电情况下为100
+        state = WFState.get_battery_state()  # 当前充电状态，close/charging/standby/takeoff/outage/cool
+        battery_value = WFState.get_battery_value()  # 电池电量, 0/1/2/3/4/100 满电情况下为100
         if state == "close":
             if battery_value == "100":#满电飞走，又飞回来关机，后启动自动充电？？？？？？？？？？？？？？？无人机飞回后，一定把电池值设置为0
                 # self.run_auto_charge = 0  # 设置 是否启动自动化充电流程 0:否
@@ -192,35 +193,35 @@ class AutoChargeControlV1(object):
         # 常量
         recv_text = "Charge"  # 充电固定指令
         result = "chargeerror"  # 充电返回状态
-        if not self.comstate_flag.get_charge_isused():
-            self.comstate_flag.set_charge_used()
+        if not self.comstate_flag.get_is_used_serial_charge():
+            self.comstate_flag.set_used_serial_charge()
             try:
-                if self.configini.get_charge_version() == "wfc":  # 无线充电
-                    if self.configini.get_wfc_version() == 'V1.0':  # V1.0版本
-                        WFC = WFCServer(self.wf_state, self.logger, self.configini)
+                if Config.get_charge_version() == "wfc":  # 无线充电
+                    if Config.get_wfc_version() == 'V1.0':  # V1.0版本
+                        WFC = WFCServer(self.logger)
                         result = WFC.operator_charge(recv_text)
-                    elif self.configini.get_wfc_version() == 'V2.0':  # V2.0版本
-                        if self.configini.wfc_double_connect == False:
-                            WFC = WFCServerV2(self.wf_state, self.logger, self.configini)
+                    elif Config.get_wfc_version() == 'V2.0':  # V2.0版本
+                        if Config.get_is_wfc_double_connect() == False:
+                            WFC = WFCServerV2(self.logger)
                         else:
-                            WFC = WFCServerV2Sender(self.wf_state, self.logger, self.comconfig)
+                            WFC = WFCServerV2Sender(self.logger)
                         result = WFC.operator_charge(recv_text)
                 else:  # 触点充电
-                    if self.configini.get_wlc_version() == "V1.0":
-                        if self.configini.wlc_double_connect == True:  # 全双工通信
-                            WFC = M300JCCServerSender(self.hangstate, self.wf_state, self.logger, self.comconfig)
+                    if Config.get_wlc_version() == "V1.0":
+                        if Config.get_is_wlc_double_connect() == True:  # 全双工通信
+                            WFC = JCCServerM300Sender(self.logger)
                         else:
-                            WFC = M300JCCServer(self.wf_state, self.logger, self.configini)
+                            WFC = JCCServerM300(self.logger)
                         result = WFC.operator_charge(recv_text)
-                    elif self.configini.get_wlc_version() == "V2.0":  # V2.0
-                        WFC = M300JCCServerV2(self.hangstate, self.wf_state, self.logger, self.configini)
+                    elif Config.get_wlc_version() == "V2.0":  # V2.0
+                        WFC = JCCServerV2M300(self.logger)
                         result = WFC.operator_charge(recv_text)
-                    elif self.configini.get_wlc_version() == "V3.0":  # V3.0
-                        WFC = M300JCCServerV3(self.hangstate, self.wf_state, self.logger, self.configini)
+                    elif Config.get_wlc_version() == "V3.0":  # V3.0
+                        WFC = JCCServerV3M300(self.logger)
                         result = WFC.operator_charge(recv_text)
-                self.comstate_flag.set_charge_free()
+                self.comstate_flag.set_used_serial_free_charge()
             except Exception as charex:
-                self.comstate_flag.set_charge_free()
+                self.comstate_flag.set_used_serial_free_charge()
                 result = "chargeerror"
         else:
             result = "busy"

@@ -5,13 +5,15 @@ from threading import Thread
 from paho.mqtt import client as mqtt_client
 
 import BASEUtile.InitFileTool
-from BASEUtile import HangerState
+import BASEUtile.HangarState as HangarState
+import WFCharge.WFState as WFState
+from ServerManager.websockets import WebSocketUtil
 from BASEUtile.logger import Logger
 
-logger = Logger(__name__)  # 日志记录
+# logger = Logger(__name__)  # 日志记录
 
 # 配置中的方舱序列号
-ini_serialNumber = BASEUtile.InitFileTool.get_str_value("jsdx_info", "serialNumber")
+ini_serialNumber = BASEUtile.InitFileTool.get_str_value("mqtt_info", "serial_number")
 
 # 操控系统下发命令主题(通配表达式#会多捕获自己的应答，所以采用元组方式)
 topic_subscribe_list = [
@@ -33,8 +35,9 @@ topic_subscribe_list = [
 client_id = BASEUtile.InitFileTool.get_str_value("mqtt_info", "client_id")  # 客户端id
 
 client_publish = None  # 用于推送消息的客户端
-webclient = None  # websocket推送线程
-hangstate = None  # 机库状态信息
+webclient: WebSocketUtil = None  # websocket推送线程
+# hangstate = None  # 机库状态信息
+logger = None  # 日志对象
 
 '''
 关于qos设置，考虑我们场景，应该统一为2
@@ -88,6 +91,7 @@ def connect_mqtt() -> mqtt_client:
             client = mqtt_client.Client(client_id)
             client.on_connect = on_connect
             client.on_connect_fail = on_connect_fail
+            client.reconnect_delay_set(min_delay=10, max_delay=120)
             # client.username_pw_set("admin", "password")
             client.username_pw_set(username, password)  # 账户密码
             # broker = 'broker.emqx.io'
@@ -213,14 +217,14 @@ def subscribe(client: mqtt_client):
 
 
 def publish(topic_publish, message):
-    logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
+    # logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
     global client_publish
-    if client_publish is None:
-        time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
-    logger.get_log().info(f"[MQTT][publish]执行下发消息:{message}")
-    result = client_publish.publish(topic_publish, message, qos=2)
-    status = result[0]
-    logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
+    if client_publish is not None:
+        # time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
+        logger.get_log().info(f"[MQTT][publish]执行下发消息,主题：{topic_publish},消息:{message}")
+        result = client_publish.publish(topic_publish, message, qos=0)
+        status = result[0]
+        logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
 
 
 def publish_no_log(topic_publish, message):
@@ -229,7 +233,7 @@ def publish_no_log(topic_publish, message):
     if client_publish is None:
         time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
     # logger.get_log().info(f"[MQTT][publish]执行下发消息:{message}")
-    result = client_publish.publish(topic_publish, message, qos=2)
+    result = client_publish.publish(topic_publish, message, qos=0)
     status = result[0]
     # logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
 
@@ -345,14 +349,14 @@ def run_7004():
             time.sleep(10)  # 异常后晚10秒启动推送，给MQTT链接创造时间
 
 
-def start_mqtt_thread_jiangsudx(web_client, hang_state):
-    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
+def start_mqtt_thread_jiangsudx(web_client, logger_in):
+    global logger
+    logger = logger_in
     global webclient
     webclient = web_client
-    global hangstate
-    hangstate = hang_state
-    # print(f"hangstate.getHangerState={hangstate.getHangerState()}")
-    # print(f"hangstate.get_state_dict()={hangstate.get_state_dict()}")
+    # global hangstate
+    # hangstate = hang_state
+    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
     thread = Thread(target=run, args=([]), daemon=True)
     thread.start()
     logger.get_log().info("[MQTT] 启动 MQTT 主接收发送任务线程 [完成]")
@@ -418,7 +422,7 @@ def do_code_1003():
         }
     }
     try:
-        result = hangstate.get_hanger_door()
+        result = HangarState.get_hangar_door_state()
         if result == "open":
             result_message['data']['respMsg'] = "已打开"
     except Exception as e:
@@ -451,7 +455,7 @@ def do_code_2003():
         }
     }
     try:
-        result = hangstate.get_hanger_bar()
+        result = HangarState.get_hangar_bar_state()
         if result == "open":
             result_message['data']['respMsg'] = "已复位"
     except Exception as e:
@@ -484,7 +488,7 @@ def do_code_3003():
         }
     }
     try:
-        result = hangstate.get_air_condition()
+        result = HangarState.get_air_condition_state()
         if result == "open":
             result_message['data']['respMsg'] = "开启状态"
     except Exception as e:
@@ -548,10 +552,10 @@ def do_code_4004():
         }
     }
     #  风速
-    windvelocity = hangstate.get_windspeed()
+    windvelocity = HangarState.set_wind_speed_value(0.0)
     result_message['data']['windvelocity'] = windvelocity
     #  风向
-    winddirection = hangstate.get_winddirection()
+    winddirection = HangarState.get_wind_direction_value()
     if winddirection == "北风":
         winddirection_info = "North"
     elif winddirection == "东北风":
@@ -590,6 +594,7 @@ def do_code_4004():
     else:
         publish_debug_log(topic_publish, result_json)
 
+
 '''
 充电状态
 '''
@@ -608,7 +613,7 @@ def do_code_5003():
     }
 
     try:
-        result = hangstate.get_wfcstate()
+        result = WFState.get_battery_state()
         if result == "charging":
             result_message['data']['respMsg'] = "正在充电"
     except Exception as e:
@@ -630,17 +635,28 @@ def do_code_7001():
         "msgCode": "7001",
         "msgExplain": "方舱信息",
         "data": {
-            "serialNumber": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber"),
-            "type": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "type"),
-            "adapter": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adapter"),
-            "adress": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adress"),
-            "alternatePoint": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "alternatePoint"),
-            "doorSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "doorSpeed"),
-            "centerSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "centerSpeed"),
-            "mqttHost": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost"),
-            "mqttPort": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPort"),
-            "mqttUserName": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName"),
-            "mqttPassWord": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            # "serialNumber": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber"),
+            # "type": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "type"),
+            # "adapter": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adapter"),
+            # "adress": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "adress"),
+            # "alternatePoint": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "alternatePoint"),
+            # "doorSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "doorSpeed"),
+            # "centerSpeed": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "centerSpeed"),
+            # "mqttHost": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost"),
+            # "mqttPort": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPort"),
+            # "mqttUserName": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName"),
+            # "mqttPassWord": BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            "serialNumber": BASEUtile.InitFileTool.get_str_value("mqtt_info", "serial_number"),
+            "type": BASEUtile.InitFileTool.get_str_value("dianxin_info", "type"),
+            "adapter": BASEUtile.InitFileTool.get_str_value("dianxin_info", "adapter"),
+            "adress": BASEUtile.InitFileTool.get_str_value("dianxin_info", "adress"),
+            "alternatePoint": BASEUtile.InitFileTool.get_str_value("dianxin_info", "alternatePoint"),
+            "doorSpeed": BASEUtile.InitFileTool.get_str_value("dianxin_info", "doorSpeed"),
+            "centerSpeed": BASEUtile.InitFileTool.get_str_value("dianxin_info", "centerSpeed"),
+            "mqttHost": BASEUtile.InitFileTool.get_str_value("mqtt_info", "host_str"),
+            "mqttPort": BASEUtile.InitFileTool.get_str_value("mqtt_info", "port_int"),
+            "mqttUserName": BASEUtile.InitFileTool.get_str_value("mqtt_info", "username_str"),
+            "mqttPassWord": BASEUtile.InitFileTool.get_str_value("mqtt_info", "password_str")
         }
     }
     result_json = json.dumps(result_message)
@@ -649,29 +665,26 @@ def do_code_7001():
 
 def do_code_7004():
     topic_publish = f"uavshelter/devicecontral/{ini_serialNumber}/status"  # 该接口的应答主题
-    shelterdoor_result = hangstate.get_hanger_door()
+    shelterdoor_result = HangarState.get_hangar_door_state()
     shelterdoor = "已关闭"
     if shelterdoor_result == "open":
         shelterdoor = "已打开"
 
-    centerdevice_result = hangstate.get_hanger_bar()
+    centerdevice_result = HangarState.get_hangar_bar_state()
     centerdevice = "已归中"
     if centerdevice_result == "open":
         centerdevice = "已复位"
 
-    chargingdevice_result = hangstate.get_wfcstate()
-    # chargingdevice_value = hangstate.get_wfc_battery_value()
+    chargingdevice_result = WFState.get_battery_state()
     chargingdevice = "未充电"
     if chargingdevice_result == "charging":
         chargingdevice = "正在充电"
     elif chargingdevice_result == "full":
         chargingdevice = "充电完成"
 
-    # airconditioner = str(hangstate.indoor_tem())
-    # weatherstation_temperature = str(hangstate.get_temperature())
-    weatherstation_windvelocity = hangstate.get_windspeed()
+    weatherstation_windvelocity = HangarState.get_wind_speed_value()
 
-    weatherstation_winddirection_result = hangstate.get_winddirection()
+    weatherstation_winddirection_result = HangarState.get_wind_direction_value()
     if weatherstation_winddirection_result == "北风":
         weatherstation_winddirection = "North"
     elif weatherstation_winddirection_result == "东北风":

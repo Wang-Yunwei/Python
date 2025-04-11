@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*- 
 # @Time : 2022/09/19 22:41
 # @Author : ZKL 
-# @File : JCCServer.py
+# @File : JCCServerM300.py
 # 黑砂触点充电
 '''
 处理充电过程中有压差、或者电池有高温等待的时候，要求两个电池能同时充电
@@ -12,17 +12,18 @@ import threading
 import time
 
 # from BASEUtile.loggerColl import LoggerColl
-from ConfigIni import ConfigIni
+import BASEUtile.Config as Config
 from JKController.BarRepeat.JKBarRepeatCharge import JKBarRepeatCharge
 from SATA.SATACom import Communication
 from SATA.SerialHelp import SerialHelper
-from USBDevice.USBDeviceConfig import USBDeviceConfig
+import USBDevice.USBDeviceConfig as USBDeviceConfig
 from WFCharge.M300VolFit import M300VolFit
-from WFCharge.WFState import WFState
+import WFCharge.WFState as WFState
+import BASEUtile.HangarState as HangarState
 from BASEUtile.logger import Logger
 
 
-class M300JCCServerV4():  # 定义接触充电服务端
+class JCCServerV4M350:  # 定义接触充电服务端
     """
     A路开
     01 06 80 00 00 01 61 CA
@@ -65,20 +66,20 @@ class M300JCCServerV4():  # 定义接触充电服务端
 
     """
 
-    def __init__(self, hangstate, state, logger, configini):
-        self.hangstate = hangstate
-        self.state = state  # 充电箱当前状态信息
+    def __init__(self,logger):
+        # self.hangstate = hangstate
+        # self.state = state  # 充电箱当前状态信息
         self.logger = logger
-        self.comconfig = USBDeviceConfig(configini)
-        self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(), 10,
+        # self.comconfig = USBDeviceConfig()
+        self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(), 10,
                                     self.logger, None)  # 串口初始化:
-        self.iniconfig = configini
+        self.iniconfig = Config
         self.pre_model = M300VolFit()
         self.A_waiting = False
         self.B_waiting = False
         self.lowA_times=0 #低电流的次数
         # self.loggercoll=LoggerColl("JCCSERVER2")
-        # self.engine = SerialHelper(Port=self.comconfig.get_device_info_chargeV2(), BaudRate=self.comconfig.get_bps_chargeV2(), ByteSize=self.comconfig.get_charge_bytesize_chargeV2(), Parity=self.comconfig.get_charge_parityV2(), Stopbits=self.comconfig.get_charge_stopbitsV2(),
+        # self.engine = SerialHelper(Port=USBDeviceConfig.get_device_info_chargeV2(), BaudRate=USBDeviceConfig.get_bps_chargeV2(), ByteSize=USBDeviceConfig.get_charge_bytesize_chargeV2(), Parity=USBDeviceConfig.get_charge_parityV2(), Stopbits=USBDeviceConfig.get_charge_stopbitsV2(),
         #                           thresholdValue=1)
 
     def hex2bin(self, string_num):
@@ -101,9 +102,9 @@ class M300JCCServerV4():  # 定义接触充电服务端
             elif commond == "Charge":
                 result = self.charge()
                 print(f"The first charge result is {result}")
-                if self.iniconfig.get_repeat_bar() == True:
+                if self.iniconfig.get_is_repeat_bar() == True:
                     if result == "chargeerror" or result == "error" or result == "chargeerror(null)":  # 充电失败情况下，要重新做一下推杆的打开和失败操作
-                        jkbarRepeat = JKBarRepeatCharge(self.hangstate, self.logger, self.comconfig)
+                        jkbarRepeat = JKBarRepeatCharge(self.logger)
                         if jkbarRepeat.repeat_bar() == False:
                             self.logger.get_log().info(f"充电失败，推杆复位再夹紧失败，充电返回失败")
                             result = "chargeerror"
@@ -120,7 +121,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 return 'commond-error'
         except Exception as ex:
             self.logger.get_log().info(f"充电操作异常，{ex}")
-            self.state.set_state("unknown")  # 未知状态
+            WFState.set_battery_state("unknown")  # 未知状态
             return "exception-error(获取不到下位机充电信息；请确认为2.0版本充电，检查充电硬件设备)"
         # time.sleep(20)
         # result="success"
@@ -133,7 +134,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
         '''
         commond = "01 06 80 00 00 01 61 CA "
         self.logger.get_log().info(f"发送开启A电池充电指令")
-        self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+        self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                     10, self.logger, None)
         self.engine.Open_Engine()
         self.engine.Send_data(bytes.fromhex(commond))
@@ -147,7 +148,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
         '''
         commond = "01 06 80 00 00 04 A1 C9"
         self.logger.get_log().info(f"发送开启B电池充电指令")
-        self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+        self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                     10, self.logger, None)
         self.engine.Open_Engine()
         self.engine.Send_data(bytes.fromhex(commond))
@@ -161,7 +162,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
         '''
         commond = "01 06 80 00 00 02 21 CB"
         self.logger.get_log().info(f"发送停止A电池充电指令")
-        self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+        self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                     10, self.logger, None)
         self.engine.Open_Engine()
         self.engine.Send_data(bytes.fromhex(commond))
@@ -175,7 +176,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
         '''
         commond = "01 06 80 00 00 08 A1 CC "
         self.logger.get_log().info(f"发送停止B电池充电指令")
-        self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+        self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                     10, self.logger, None)
         self.engine.Open_Engine()
         self.engine.Send_data(bytes.fromhex(commond))
@@ -193,7 +194,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
         '''
         commond = "01 04 00 00 00 06 70 08 "
         self.logger.get_log().info(f"发送读取当前充电状态指令")
-        self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+        self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                     10, self.logger, None)
         self.engine.Open_Engine()
         self.engine.Send_data(bytes.fromhex(commond))
@@ -240,16 +241,16 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 if int(valueAA10)/100<0.5 and int(valueBA10)/100<0.5:#如果预测出的A、B电流都小于0.5则认为满电，断开充电
                     self.logger.get_log().info(
                         f"check充电状态，预测出A、B均满电或降温，{pre_A},{pre_B}")
-                    if self.state.get_state() == "charging":  # 如果是充电
-                        self.state.set_state("full")
-                        self.state.set_battery_value("100")
+                    if WFState.get_battery_state() == "charging":  # 如果是充电
+                        WFState.set_battery_state("full")
+                        WFState.set_battery_value("100")
                         self.standby()  # 2023-9-27 断开操作
                     else:
-                        self.state.set_state("full or waiting")
+                        WFState.set_battery_state("full or waiting")
                 if pre_A >= pre_B and pre_A != -1 and pre_B != -1:
                     if (pre_A - pre_B) > 8 and pre_A < 65:  # 只有电量小于65的时候才可以断，大于65再启动充电可能无法启动
                         # A、B电量偏差太大，需要断掉A电池充电
-                        if self.iniconfig.get_blance_charge()== True:
+                        if self.iniconfig.get_is_blance_charge()== True:
                             self.standby_A()
                             self.A_waiting = True
                             self.logger.get_log().info(
@@ -260,11 +261,11 @@ class M300JCCServerV4():  # 定义接触充电服务端
                     elif (pre_A - pre_B) > 8 and pre_A >= 65:
                         self.logger.get_log().info(
                             f"check充电状态，预测出电量压差过大，A电量大，A电量预测为{pre_A}，但是A电量已经超过65，不断开A充电")
-                    self.state.set_battery_value(f"{pre_B}")
+                    WFState.set_battery_value(f"{pre_B}")
                 elif pre_A < pre_B and pre_A != -1 and pre_B != -1:
                     if (pre_B - pre_A) > 8 and pre_B < 65:
                         # A、B电量偏差太大，需要断掉B电池充电
-                        if self.iniconfig.get_blance_charge() == True:
+                        if self.iniconfig.get_is_blance_charge() == True:
                             self.standby_B()
                             self.B_waiting = True
                             self.logger.get_log().info(
@@ -275,82 +276,109 @@ class M300JCCServerV4():  # 定义接触充电服务端
                     elif (pre_B - pre_A) > 8 and pre_B >= 65:
                         self.logger.get_log().info(
                             f"check充电状态，预测出电量压差过大，A电量大，B电量预测为{pre_B}，但是B电量已经超过65，不断开B充电")
-                    self.state.set_battery_value(f"{pre_A}")
+                    WFState.set_battery_value(f"{pre_A}")
                 self.logger.get_log().info(
-                    f"check充电状态，预测电量为{pre_A},{pre_B},当前电量为{self.state.get_battery_value()}")
-                self.state.set_state("charging")
+                    f"check充电状态，预测电量为{pre_A},{pre_B},当前电量为{WFState.get_battery_value()}")
+                WFState.set_battery_state("charging")
             elif int(valueAA10) > 0:  # 如果只有A充电
                 # 预测B电量，如果B不为满电，则B为降温模式，这个时候要断掉A充电，等待B
                 pre_A = self.pre_model.pre_vol(int(valueAV10) / 100, int(valueAA10) / 100)
                 pre_B = self.pre_model.pre_vol(int(valueBV10) / 100, int(valueBA10) / 100)  # 有可能满电，有可能高温等待
                 # if pre_B<100:#B不为满电，断掉A充电
-                if self.state.get_state() == "charging":  # B电池满电
-                    self.logger.get_log().info(f"check充电状态，预测出B满电，{pre_B},A继续充电")
-                    self.state.set_state("charging")
-                    self.state.set_battery_value(f"{pre_A}")
+                if WFState.get_battery_state() == "charging":  # B电池满电
+                    # self.logger.get_log().info(f"check充电状态，预测出B满电，{pre_B},A继续充电")
+                    # WFState.set_battery_state("charging")
+                    # WFState.set_battery_value(f"{pre_A}")
+                    if int(valueAA10) / 100 < 0.5:  # 如果预测出的A电流都小于0.5则认为满电，断开充电
+                        self.logger.get_log().info(
+                            f"check充电状态，预测出B满电或降温，A电流小，{pre_A},{pre_B}")
+                        if WFState.get_battery_state() == "charging":  # 如果是充电
+                            WFState.set_battery_state("full")
+                            WFState.set_battery_value("100")
+                            self.standby()  # 2023-9-27 断开操作
+                        else:
+                            WFState.set_battery_state("full or waiting")
+                    else:
+                        self.logger.get_log().info(f"check充电状态，预测出B满电，{pre_B},A继续充电")
+                        WFState.set_battery_state("charging")
+                        WFState.set_battery_value(f"{pre_A}")
                 elif pre_A < 80 and pre_A != -1:  # 当A电量不满80的时候，认为B是在高温等待；B不为满电，断掉A充电
-                    if self.iniconfig.get_blance_charge() == True:
+                    if self.iniconfig.get_is_blance_charge() == True:
                         self.standby_A()
                         self.A_waiting = True
                         self.logger.get_log().info(f"check充电状态，预测出B在等待降温，{pre_B},停止A充电")
-                        self.state.set_state("waiting")
-                        self.state.set_battery_value(f"{pre_A}")
+                        WFState.set_battery_state("waiting")
+                        WFState.set_battery_value(f"{pre_A}")
                     else:
-                        self.state.set_state("charging")
+                        WFState.set_battery_state("charging")
                         self.logger.get_log().info(f"check充电状态，预测出B在等待降温，{pre_B},没有启用均衡充电，继续双充电")
                 else:  # B为满电
                     # 2023-9-27 如果两个电流都很小，则认为满电
                     if int(valueAA10) / 100 < 0.5:  # 如果预测出的A电流都小于0.5则认为满电，断开充电
                         self.logger.get_log().info(
                             f"check充电状态，预测出B满电或降温，A电流小，{pre_A},{pre_B}")
-                        if self.state.get_state() == "charging":  # 如果是充电
-                            self.state.set_state("full")
-                            self.state.set_battery_value("100")
+                        if WFState.get_battery_state() == "charging":  # 如果是充电
+                            WFState.set_battery_state("full")
+                            WFState.set_battery_value("100")
                             self.standby()  # 2023-9-27 断开操作
                         else:
-                            self.state.set_state("full or waiting")
+                            WFState.set_battery_state("full or waiting")
                     else:
                         self.logger.get_log().info(f"check充电状态，预测出B满电，{pre_B},A继续充电")
-                        self.state.set_state("charging")
-                        self.state.set_battery_value(f"{pre_A}")
+                        WFState.set_battery_state("charging")
+                        WFState.set_battery_value(f"{pre_A}")
             elif int(valueBA10) > 0:  # 如果只有B充电
                 # 预测A电量，如果A不为满电，则A为降温模式，这个时候要断掉B充电，等待A
                 pre_A = self.pre_model.pre_vol(int(valueAV10) / 100, int(valueAA10) / 100)  # 有可能满电，有可能高温等待
                 pre_B = self.pre_model.pre_vol(int(valueBV10) / 100, int(valueBA10) / 100)
                 # if pre_A<100:#A不为满电，断掉A充电
                 # 如果上个状态是在充电的状态，这个时候有一个电池断掉了，那这个电池认定为满电状态
-                if self.state.get_state() == "charging":  # A电池满电
-                    self.logger.get_log().info(
-                        f"check充电状态，预测出A满电，{pre_A},B继续充电")
-                    self.state.set_state("charging")
-                    self.state.set_battery_value(f"{pre_B}")
+                if WFState.get_battery_state() == "charging":  # A电池满电
+                    # self.logger.get_log().info(
+                    #     f"check充电状态，预测出A满电，{pre_A},B继续充电")
+                    # WFState.set_battery_state("charging")
+                    # WFState.set_battery_value(f"{pre_B}")
+                    if int(valueBA10) / 100 < 0.5:  # 如果预测出的B电流都小于0.5则认为满电，断开充电
+                        self.logger.get_log().info(
+                            f"check充电状态，预测出B满电或降温，B电流小，{pre_A},{pre_B}")
+                        if WFState.get_battery_state() == "charging":  # 如果是充电
+                            WFState.set_battery_state("full")
+                            WFState.set_battery_value("100")
+                            self.standby()  # 2023-9-27 断开操作
+                        else:
+                            WFState.set_battery_state("full or waiting")
+                    else:
+                        self.logger.get_log().info(
+                            f"check充电状态，预测出A满电，{pre_A},B继续充电")
+                        WFState.set_battery_state("charging")
+                        WFState.set_battery_value(f"{pre_B}")
                 elif pre_B < 80 and pre_B != -1:  # A不为满电，断掉A充电
-                    if self.iniconfig.get_blance_charge() == True:
+                    if self.iniconfig.get_is_blance_charge() == True:
                         self.standby_B()
                         self.B_waiting = True
                         self.logger.get_log().info(
                             f"check充电状态，预测出A在等待降温，{pre_A},停止B充电")
-                        self.state.set_state("waiting")
-                        self.state.set_battery_value(f"{pre_B}")
+                        WFState.set_battery_state("waiting")
+                        WFState.set_battery_value(f"{pre_B}")
                     else:
-                        self.state.set_state("charging")
+                        WFState.set_battery_state("charging")
                         self.logger.get_log().info(f"check充电状态，预测出B在等待降温，{pre_A},没有启用均衡充电，继续双充电")
                 else:  # A为满电
                     # 2023-9-27 如果两个电流都很小，则认为满电
                     if int(valueBA10) / 100 < 0.5:  # 如果预测出的B电流都小于0.5则认为满电，断开充电
                         self.logger.get_log().info(
                             f"check充电状态，预测出B满电或降温，B电流小，{pre_A},{pre_B}")
-                        if self.state.get_state() == "charging":  # 如果是充电
-                            self.state.set_state("full")
-                            self.state.set_battery_value("100")
+                        if WFState.get_battery_state() == "charging":  # 如果是充电
+                            WFState.set_battery_state("full")
+                            WFState.set_battery_value("100")
                             self.standby()  # 2023-9-27 断开操作
                         else:
-                            self.state.set_state("full or waiting")
+                            WFState.set_battery_state("full or waiting")
                     else:
                         self.logger.get_log().info(
                             f"check充电状态，预测出A满电，{pre_A},B继续充电")
-                        self.state.set_state("charging")
-                        self.state.set_battery_value(f"{pre_B}")
+                        WFState.set_battery_state("charging")
+                        WFState.set_battery_value(f"{pre_B}")
             else:  # 双边均没电流
                 # 预测A/B电量
                 pre_A = self.pre_model.pre_vol(int(valueAV10) / 100, int(valueAA10) / 100)
@@ -358,26 +386,26 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 if pre_A == 100 and pre_B == 100:  # 如果都是满电，或者都是高温等待
                     self.logger.get_log().info(
                         f"check充电状态，预测出A、B均满电或降温，{pre_A},{pre_B}")
-                    if self.state.get_state() == "charging":  # 如果是充电
-                        self.state.set_state("full")
-                        self.state.set_battery_value("100")
+                    if WFState.get_battery_state() == "charging":  # 如果是充电
+                        WFState.set_battery_state("full")
+                        WFState.set_battery_value("100")
                         self.standby()  # 2023-5-22 断开操作
                     else:
-                        self.state.set_state("full or waiting")
+                        WFState.set_battery_state("full or waiting")
                 if pre_A < 100 and pre_B < 100:  # 均不为满电，那就是双方均在等待
                     self.logger.get_log().info(
                         f"check充电状态，预测出A、B均在等待，{pre_A},{pre_B}，cooling 或加热中")
-                    self.state.set_state("waiting")
+                    WFState.set_battery_state("waiting")
                 if pre_A < 100:  # 如果只有A不满电
                     self.logger.get_log().info(
                         f"check充电状态，预测出A在等待，{pre_A},B满电，{pre_B}，cooling 或加热中")
-                    self.state.set_state("waiting")
-                    self.state.set_battery_value(f"{pre_A}")
+                    WFState.set_battery_state("waiting")
+                    WFState.set_battery_value(f"{pre_A}")
                 if pre_B < 100:  # 如果只有B不满电
                     self.logger.get_log().info(
                         f"check充电状态，预测出A满电，{pre_A},B在等待，{pre_B}，cooling 或加热中")
-                    self.state.set_state("waiting")
-                    self.state.set_battery_value(f"{pre_B}")
+                    WFState.set_battery_state("waiting")
+                    WFState.set_battery_value(f"{pre_B}")
         elif value[3:5] == "01":  # A充，B不充（A开，B不开）
             # 说明前面，B处于等待的状态，被断掉了充电，前面A处于降温或者低电压情况
             # （1）A有电流，说明A处于充电中，这个时候A不降温
@@ -385,14 +413,14 @@ class M300JCCServerV4():  # 定义接触充电服务端
             if int(valueAA10) / 100 > 0:  # A有电流
                 self.logger.get_log().info(
                     f"check充电状态，只有A在充电，此时启动B充电")
-                self.state.set_state("charging")
+                WFState.set_battery_state("charging")
                 self.charge_B()  # 启动B充电
-                self.state.set_battery_value(f"{pre_A}")
+                WFState.set_battery_value(f"{pre_A}")
             else:  # 如果A没有电流，说明A没在充电，可能A还在降温
                 self.logger.get_log().info(
                     f"check充电状态，A仍然没有充电，A继续等待")
-                self.state.set_state("waiting")
-                self.state.set_battery_value(f"-1")
+                WFState.set_battery_state("waiting")
+                WFState.set_battery_value(f"-1")
         elif value[3:5] == "10":  # B充，A不充(B开A不开)
             # 说明前面，A处于等待的状态，被断掉了充电，前面B处于降温或者低电压情况
             # （1）B有电流，说明B处于充电中，这个时候B不降温
@@ -400,15 +428,15 @@ class M300JCCServerV4():  # 定义接触充电服务端
             if int(valueBA10) / 100 > 0:  # B有电流
                 self.logger.get_log().info(
                     f"check充电状态，只有B在充电，此时启动A充电")
-                self.state.set_state("charging")
+                WFState.set_battery_state("charging")
                 self.charge_A()  # 启动A充电
-                self.state.set_battery_value(f"{pre_B}")
+                WFState.set_battery_value(f"{pre_B}")
             else:  # 如果B没有电流，说明B没在充电，可能B还在降温
                 self.logger.get_log().info(
                     f"check充电状态，B仍然没有充电，B继续等待")
-                self.state.set_state("waiting")
-                self.state.set_battery_value(f"-1")
-        self.logger.get_log().info(f"当前电池电量为：{self.state.get_battery_value()}")
+                WFState.set_battery_state("waiting")
+                WFState.set_battery_value(f"-1")
+        self.logger.get_log().info(f"当前电池电量为：{WFState.get_battery_value()}")
 
     def standby(self):
         '''
@@ -420,7 +448,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
             result = ""
             # 发送命令
             self.logger.get_log().info(f"发送待机命令--Standby")
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Open_Engine()
             # A路关
@@ -434,7 +462,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
             time.sleep(2)
             self.engine.Close_Engine()
             # 等待5秒后启动B路关
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Send_data(bytes.fromhex(command_close_B))
             # 等待10秒读取状态
@@ -448,8 +476,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
             empty_times = 0
             while waittimes > 0:
                 if len(result) == 0:
-                    self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                                self.comconfig.get_bps_chargeV2(),
+                    self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                                USBDeviceConfig.get_serial_bps_charge(),
                                                 10, self.logger, None)
                     self.engine.Open_Engine()
                     self.engine.Send_data(bytes.fromhex(command_read))
@@ -470,7 +498,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 value = self.hex2bin(value)
                 self.logger.get_log().info(f"第{begintimes - waittimes}次，Standby deal result is {value}")
                 if value[3:] == "00":
-                    self.state.set_state("standby")
+                    WFState.set_battery_state("standby")
                     result = "success"
                     break
                 result = ""
@@ -487,12 +515,12 @@ class M300JCCServerV4():  # 定义接触充电服务端
         :return:
         """
         try:
-            self.state.set_state("unknown")
-            self.state.set_battery_value("0")
+            WFState.set_battery_state("unknown")
+            WFState.set_battery_value("0")
             result = ""
             # 发送命令
             self.logger.get_log().info(f"发送充电命令--Charge")
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Open_Engine()
             command_open_A = "01 06 80 00 00 01 61 CA "
@@ -501,7 +529,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
             self.engine.Send_data(bytes.fromhex(command_open_A))
             time.sleep(5)
             self.engine.Close_Engine()
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             # 等待5秒后启动B路
             self.engine.Open_Engine()
@@ -517,8 +545,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
             success_wait_times = 0
             while waittimes > 0:
                 if len(result) == 0:
-                    self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                                self.comconfig.get_bps_chargeV2(),
+                    self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                                USBDeviceConfig.get_serial_bps_charge(),
                                                 10, self.logger, None)
                     self.engine.Open_Engine()
                     self.engine.Send_data(bytes.fromhex(command_read))
@@ -561,10 +589,10 @@ class M300JCCServerV4():  # 定义接触充电服务端
                         if int(valueAA10) == 0 or int(valueBA10) == 0:
                             self.logger.get_log().info("---------充电启动的时候，单边充电---------------")
                             # 单边充电要做的一些处理，是否做成一个配置，单边充电不启动充电
-                            if self.iniconfig.get_signal_battery_charge() == True:  # 配置了单边充电，不启动充电
+                            if self.iniconfig.get_is_signal_battery_charge() == True:  # 配置了单边充电，不启动充电
                                 self.standby()  # 待机操作，停止充电
                                 return "chargeerror"
-                        self.state.set_state("charging")
+                        WFState.set_battery_state("charging")
                         result = "success"
                         break
                     elif int(valueAV10) / 100 > 30 and int(valueBV10) / 100 > 30:  # 无人机不在或者充满了,双电池都不在充电
@@ -573,22 +601,22 @@ class M300JCCServerV4():  # 定义接触充电服务端
                             time.sleep(3)
                             result = ""
                             continue
-                        if self.state.get_state() == "charging" or self.state.get_state() == "full":
-                            self.state.set_battery_value("100")
-                            self.state.set_state("full")
+                        if WFState.get_battery_state() == "charging" or WFState.get_battery_state() == "full":
+                            WFState.set_battery_value("100")
+                            WFState.set_battery_state("full")
                         else:
                             # 充电,满电或高温等待
                             if self.pre_model.pre_vol(int(valueAV10) / 100, 0) == 100 or self.pre_model.pre_vol(
                                     int(valueBV10) / 100, 0) == 100:  # 冷却的时候电量预测和满电的时候情况类似，开始的时候没有电量
-                                # self.state.set_battery_value("100")
-                                self.state.set_state("full or waiting")
-                                if self.iniconfig.get_blance_charge()==True:
+                                # WFState.set_battery_value("100")
+                                WFState.set_battery_state("full or waiting")
+                                if self.iniconfig.get_is_blance_charge()==True:
                                     # 断开B，打开A,解决满电的时候自动断电的情况，只有一个开的时候不自动断开
                                     self.standby_B()
                                     self.charge_A()
                                 result = "chargeerror"
                             else:  # 带电压,状态未知
-                                self.state.set_state("unknown")
+                                WFState.set_battery_state("unknown")
                                 result = "chargeerror"
                         break
                     else:
@@ -612,7 +640,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
             is_charging = False
             # 发送命令
             self.logger.get_log().info(f"接收到开机命令--TakeOff")
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         20, self.logger, None)
             self.engine.Open_Engine()
             command_open = "01 06 80 00 00 10 A1 C6"
@@ -634,12 +662,12 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 self.logger.get_log().info('开机操作，开机之前无人机非充电')
                 # 等待10秒读取状态.2023-5-10,必须强制等待5秒，否则立即standby情况下，开机返回结果正确，但是实际开机失败
                 # 2023-7-21
-                if self.state.get_state() == "standby":
+                if WFState.get_battery_state() == "standby":
                     time.sleep(3)
                 # time.sleep(3)#必须要等待，否则马上下开机指令，提示开机成功，实际没有成功
             # 做命令读取操作，2023-2-11
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                        self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                        USBDeviceConfig.get_serial_bps_charge(),
                                         20, self.logger, None)
             self.engine.Open_Engine()
             self.engine.Send_data(bytes.fromhex(command_read))
@@ -650,8 +678,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
 
             # 然后进行第二次开机操作
             self.logger.get_log().info('开机操作，发送开机动作')
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                        self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                        USBDeviceConfig.get_serial_bps_charge(),
                                         20, self.logger, None)
             self.engine.Open_Engine()
             self.engine.Send_data(bytes.fromhex(command_open))
@@ -665,8 +693,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
             empty_times = 0
             while waittimes > 0:
                 if len(result) == 0:
-                    self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                                self.comconfig.get_bps_chargeV2(),
+                    self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                                USBDeviceConfig.get_serial_bps_charge(),
                                                 10, self.logger, None)
                     self.engine.Open_Engine()
                     self.engine.Send_data(bytes.fromhex(command_read))
@@ -691,8 +719,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 valueAV = binascii.b2a_hex(result[7:9]).decode('ascii')  # A路电压
                 valueBV = binascii.b2a_hex(result[9:11]).decode('ascii')  # B路电压
                 if value[:2] == "01" and (int(valueAV.upper(), 16) > 0 or int(valueBV.upper(), 16) > 0):
-                    self.state.set_state("takeoff")
-                    self.state.set_battery_value("-1")  # 2023-06-16电量预测
+                    WFState.set_battery_state("takeoff")
+                    WFState.set_battery_value("-1")  # 2023-06-16电量预测
                     result = "success"
                     break
                 result = ""
@@ -715,7 +743,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
             is_charging = False
             # 发送命令
             self.logger.get_log().info(f"发送关机命令--DroneOff")
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Open_Engine()
             command_close = "01 06 80 00 00 20 A1 D2"
@@ -734,7 +762,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 self.standby()
                 time.sleep(10)
 
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Open_Engine()
             # 发送关机指令
@@ -748,8 +776,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
             empty_times = 0
             while waittimes > 0:
                 if len(result) == 0:
-                    self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                                self.comconfig.get_bps_chargeV2(),
+                    self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                                USBDeviceConfig.get_serial_bps_charge(),
                                                 10, self.logger, None)
                     self.engine.Open_Engine()
                     self.engine.Send_data(bytes.fromhex(command_read))
@@ -770,7 +798,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
                 value = self.hex2bin(value)
                 self.logger.get_log().info(f"第{begintimes - waittimes}次，droneoff deal result is {value}")
                 if value[:2] == "10":
-                    self.state.set_state("close")
+                    WFState.set_battery_state("close")
                     result = "success"
                     break
                 result = ""
@@ -787,11 +815,11 @@ class M300JCCServerV4():  # 定义接触充电服务端
         :return:
         """
         try:
-            result = "false"
+            result = "error"
             # 发送命令
             self.logger.get_log().info(
-                f"发送命令--Check,before checking, current battery value is {self.state.get_battery_value()},state is {self.state.get_state()}")
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+                f"发送命令--Check,before checking, current battery value is {WFState.get_battery_value()},state is {WFState.get_battery_state()}")
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Open_Engine()
             command_read = "01 04 00 00 00 06 70 08"
@@ -799,8 +827,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
             result = self.engine.Read_Size(17)
             self.engine.Close_Engine()
             if len(result) == 0:
-                self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                            self.comconfig.get_bps_chargeV2(),
+                self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                            USBDeviceConfig.get_serial_bps_charge(),
                                             10, self.logger, None)
                 self.engine.Open_Engine()
                 self.engine.Send_data(bytes.fromhex(command_read))
@@ -825,46 +853,49 @@ class M300JCCServerV4():  # 定义接触充电服务端
             value = binascii.b2a_hex(result[3:5]).decode('ascii')
             value = self.hex2bin(value)
             self.logger.get_log().info(
-                f"check指令获取到的值，value is {value},value[3:5] is {value[3:5]}，电压、电流值AV is {int(valueAV10) / 100},BV is {int(valueBV10) / 100}，AA is {int(valueAA10) / 100},BA is {int(valueBA10) / 100}，当前电量为{self.state.get_battery_value()}")
+                f"check指令获取到的值，value is {value},value[3:5] is {value[3:5]}，电压、电流值AV is {int(valueAV10) / 100},BV is {int(valueBV10) / 100}，AA is {int(valueAA10) / 100},BA is {int(valueBA10) / 100}，当前电量为{WFState.get_battery_value()}")
 
             # 根据状态值做逻辑处理
             if value[3:5] in ("11", "10", "01"):
                 self.logger.get_log().info(f"检查到结果在charging检测范围内，需要进行charging检查")
                 self.check_charging(result)
-            elif value == "10100" and self.state.get_state() == "charging":
+            elif value == "10100" and WFState.get_battery_state() == "charging":
                 print("standby")
                 self.standby()
-                self.state.set_state("close")
-                self.state.set_battery_value("100")
+                WFState.set_battery_state("close")
+                WFState.set_battery_value("100")
                 result = "close"
             elif value[:2] == "01":
                 valueAV = int(valueAV.upper(), 16)  # A路电压
                 valueBV = int(valueBV.upper(), 16)  # B路电压
                 if valueBV > 0 or valueAV > 0:
                     # 2023-7-28 开机成功除了前面的标识位置为01外，还要判断检测到的电压有一个>0
-                    self.state.set_state("takeoff")
-                    self.state.set_battery_value("-1")  # 2023-06-16电量预测
+                    WFState.set_battery_state("takeoff")
+                    WFState.set_battery_value("-1")  # 2023-06-16电量预测
                     result = "takeoff"
                 elif value[3:] == "00":
-                    self.state.set_state("standby")
+                    WFState.set_battery_state("standby")
                     result = "standby"
             elif value[:2] == "10":
-                if "open" in self.hangstate.get_hanger_bar():
-                    self.state.set_state("standby")
+                if "open" in HangarState.get_hangar_bar_state():
+                    WFState.set_battery_state("standby")
                     result = "standby"
                 else:
-                    self.state.set_state("close")
+                    WFState.set_battery_state("close")
                     result = "close"
             elif value[3:] == "00":
-                self.state.set_state("standby")
+                WFState.set_battery_state("standby")
                 result = "standby"
             else:
                 self.logger.get_log().info(f"Check result +++ UNKNOWN: {result}")
-                self.state.set_state("unknown")
+                WFState.set_battery_state("unknown")
             self.logger.get_log().info(f"Check deal result is {result}")
-            return result
+            if 'error' in str(result):
+                return result
+            else:
+                return 'success'
         except Exception as e:
-            self.logger.get_log().info(f"待机命令异常，{e}")
+            self.logger.get_log().info(f"check状态检查命令异常，{e}")
             return 'error'
 
     def exe_commond(self, commond):
@@ -887,7 +918,7 @@ class M300JCCServerV4():  # 定义接触充电服务端
             result = "false"
             # 发送命令
             self.logger.get_log().info(f"发送待机命令--Check")
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Open_Engine()
             command_read = commond
@@ -895,8 +926,8 @@ class M300JCCServerV4():  # 定义接触充电服务端
             result = self.engine.Read_Size(17)
             self.engine.Close_Engine()
             if len(result) == 0:
-                self.engine = Communication(self.comconfig.get_device_info_chargeV2(),
-                                            self.comconfig.get_bps_chargeV2(),
+                self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(),
+                                            USBDeviceConfig.get_serial_bps_charge(),
                                             10, self.logger, None)
                 self.engine.Open_Engine()
                 self.engine.Send_data(bytes.fromhex(command_read))
@@ -918,12 +949,12 @@ class M300JCCServerV4():  # 定义接触充电服务端
 
     def printstate(self):
         for i in range(10):
-            print(self.state.getHangerState())
+            print(WFState.get_hangar_state())
 
     def readData(self, times):
         commond = "01 04 00 00 00 06 70 08"
         for i in range(times):
-            self.engine = Communication(self.comconfig.get_device_info_chargeV2(), self.comconfig.get_bps_chargeV2(),
+            self.engine = Communication(USBDeviceConfig.get_serial_usb_charge(), USBDeviceConfig.get_serial_bps_charge(),
                                         10, self.logger, None)
             self.engine.Open_Engine()
             command_read = commond

@@ -422,7 +422,7 @@ def updatesoftware():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "c:p:o:")
     except getopt.GetoptError:
-        print('test.py -c <module_name> -p<pid> -o<add,delete,update>')
+        print('test._constantpy -c <module_name> -p<pid> -o<add,delete,update>')
         sys.exit(2)
     for opt, value in opts:
         if opt == "-c":

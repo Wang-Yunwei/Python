@@ -1,0 +1,16 @@
+IS_SYSTEM_RUNNING = 0  # 系统运行状态
+INNER_TEM = 0  # 柜内温度
+INNER_HUM = 0  # 柜内湿度
+OUT_TEM = 0  # 柜外温度
+OUT_HUM = 0  # 柜外湿度
+IS_HOT_MODE = 0  # 加热模式是否运行
+IS_COLD_MODE = 0  # 制冷模式是否运行
+IS_INNER_MACHINE_RUN = 0  # 柜内风机运行状态
+IS_COLD_AREFACTION = 0  # 制冷除湿模式是否运行
+IS_HOT_AREFACTION = 0  # 加热除湿模式是否运行
+IS_ALARM_STATE = 0  # 报警状态
+IS_INNER_HOT_ALARM = 0  # 柜内加热报警状态
+IS_INNER_COLD_ALARM = 0  # 柜内制冷报价状态
+IS_INNER_TEMPERATURE_ERROR = 0  # 柜内温感故障
+IS_COLD_INVALID = 0  # 柜内制冷失效告警
+IS_HOT_INVALID = 0  # 制热失效告警

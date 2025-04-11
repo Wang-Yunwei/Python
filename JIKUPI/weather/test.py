@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*- 
 # @Time : 2022/2/14 11:11 
 # @Author : ZKL 
-# @File : test.py
+# @File : test._constantpy
 # byte_test=b'/x00/x01/x00/x07/x00/x00'
 # restult_str=byte_test.decode(('ascii'))
 # windspeed=restult_str[2:4]+restult_str[6:8]

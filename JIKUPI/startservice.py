@@ -11,80 +11,79 @@ import math
 import hashlib
 import json
 
-from flask import Flask, Response, render_template,redirect
+from flask import Flask, Response, render_template, redirect
 from flask import request
 
 # 创建flask访问接口
 import AirCondition
-import JKController
 import BASEUtile.InitFileTool
 import client
 from Activate.ActivateUtils import ActivateUtils
-from AirCondition.AirConditionComputer import AirConditionOper
-from AirCondition.AirConditionState import AirCondtionState
+from AirCondition.AirConditionComputer import AirConditionComputer
 from AirCondition.CheckAirConState import CheckAirConState
-from AutoCharge.AutoChargeControlV1 import AutoChargeControlV1
 from BASEUtile import MINIO
-from BASEUtile.Config import Config
-from BASEUtile.HangerState import HangerState
+import BASEUtile.Config as Config
+import BASEUtile.HangarState as HangarState
 from BASEUtile.logger import Logger
 from BASEUtile.loggerColl import LoggerColl
-from ConfigIni import ConfigIni
 from GPS.GPSCompute import GPSInfo
-from JKController.JKBarServer import JKBarServer
-from JKController.JKDoorServer import JKDoorServer
 from JKController.JKDownVersion import DownVersion
 
-from JKController.LightController import LightController
 from MQTTUtil.python_mqtt import start_mqtt_thread_dx
 from MQTTUtil.python_mqtt_jiangsudx import start_mqtt_thread_jiangsudx
 from MQTTUtil.python_mqtt_hubeidianli import start_mqtt_thread_hubeidianli
 from MQTTUtil.python_mqtt_nanfangdianwang import start_mqtt_thread_nanfangdianwang
-from SATA.SATACom import Communication, JKSATACOM
 from ServerManager.websockets import WebSocketUtil
-#from ServerManager.websocketsV1 import WebSocketUtilV1
-from StateFlag import StateFlag
-from USBDevice.USBDeviceConfig import USBDeviceConfig
 from WFCharge.ChargeAtTime import ChargeAtTime
 from WFCharge.CheckState import CheckState
-from WFCharge.CheckStateWFCV2 import CheckStateWFCV2
 from WFCharge.JCCListerner import JCCListerner
-from WFCharge.JCCServer import M300JCCServer
-from WFCharge.JCCServerSend import M300JCCServerSender
-#from WFCharge.JCCServerV2 import M300JCCServerV2
-from WFCharge.JCCServerV2_Single import M300JCCServerV2
-from WFCharge.JCCServerV3 import M300JCCServerV3
-from WFCharge.JCCServerV4M350 import M300JCCServerV4
-from WFCharge.WFCServer import WFCServer
-from WFCharge.WFCServerV2 import WFCServerV2
-from WFCharge.WFCServerV2Sender import WFCServerV2Sender
+from WFCharge.JCCServerV2M300Single import JCCServerV2M300Single
 from WFCharge.WFCV2Listerner import WFCV2Listerner
-from WFCharge.WFState import WFState
+import WFCharge.WFState as WFState
 from AutoCharge.AutoChargeControl import AutoChargeControl
 from weather.AlarmController import AlarmController
-from weather.UAVController import UAVController
 from weather.WeatherCompute import WeatherInfo485
 from weather.weather import WeatherInfo
 from BASEUtile.ResultCodeDict import ResultCodeDict
 from Activate.ASHelper import get_aes
+import BASEUtile.BusinessConstant as BusinessConstant
+from BASEUtile.InitHangarState import InitHangarState
+import BASEUtile.OperateUtil as OperateUtil
+import weather.AlarmLightController as AlarmLightController
+from BASEUtile.BusinessEnum import AlarmLightEnum
 
 # from weather.weather import WeatherInfo
 
 app = Flask(__name__)
 logger = Logger(__name__)  # 日志记录
-
+BusinessConstant.LOGGER = logger
 # ---------------无线充电操作
-wf_state = WFState()  # 创建对象
+# wf_state = WFState()  # 创建对象
 # ---------机库状态---包括当前无线充电的状态
-airconstate=AirCondtionState()
-hangstate = HangerState(wf_state,airconstate)
+# airconstate = AirCondtionState()
+# hangstate = HangarState()
 auto_charge = None  # 自动充电处理对象(需挂起线程)
 webclient = None  # websocket推送线程
-configini = ConfigIni()  # 初始配置信息
-comstate_flag = StateFlag(configini)  # 状态标记
-comconfig = USBDeviceConfig(configini)
 
-# auto_charge = None  # AutoChargeControl(logger, wf_state, comstate_flag, configini)#自动充电
+
+# configini = ConfigIni()  # 初始配置信息
+# comconfig = USBDeviceConfig()
+
+@app.route('/test', methods=['GET', 'POST'])
+def test():
+    # threading.Thread(target=AlarmLightController.open_light_thread, args=()).start()
+    # while True:
+    #     time.sleep(6)
+    #     BusinessConstant.ALARM_LIGHT = AlarmLightEnum.YELLOW_LIGHT_FLASH
+    #     time.sleep(6)
+    #     BusinessConstant.ALARM_LIGHT = AlarmLightEnum.RED_LIGHT_FLASH
+    #     time.sleep(6)
+    #     WFState.set_battery_state("charging")
+    #     BusinessConstant.ALARM_LIGHT = AlarmLightEnum.GREEN_LIGHT
+    #     time.sleep(6)
+    #     WFState.set_battery_state("standby")
+    #     BusinessConstant.ALARM_LIGHT = AlarmLightEnum.GREEN_LIGHT
+    pass
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -94,32 +93,36 @@ def home():
     :return:
     '''
     # 先读取一个机库配置信息
-    config = Config()
-    configinfo_list = config.getconfiginfo()  # 列表元组的形式
+    # config = Config()
+    configinfo_list = Config.get_websocket_config_info()  # 列表元组的形式
     if configinfo_list is None:
         # add table
-        config.createTable()
+        Config.createTable()
     if configinfo_list is not None and len(configinfo_list) == 1:
-        ipaddress = configinfo_list[0][1]
-        socket_info = configinfo_list[0][2]
-        station_id = configinfo_list[0][3]
-        username="wkzn"
-        down_version=""
+        # ipaddress = configinfo_list[0][1]
+        # socket_info = configinfo_list[0][2]
+        # station_id = configinfo_list[0][3]
+        station_id = configinfo_list[0][1]
+        web_socket_url = configinfo_list[0][2]
+        web_socket_heart = configinfo_list[0][3]
+        username = "wkzn"
+        down_version = ""
         try:
             import socket
-            username=socket.gethostname()
-            downversion=DownVersion(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-            down_version=downversion.get_dwon_version() #下位机版本号
+            username = socket.gethostname()
+            downversion = DownVersion(logger=logger)
+            down_version = downversion.get_down_version()  # 下位机版本号
         except Exception as ex:
             logger.get_log().info(f"读取上位机用户名或者下位机版本号错误{ex}")
-        if len(configinfo_list[0]) == 5:
-            web_socket_url = configinfo_list[0][4]
-        else:
-            web_socket_url = ''
-        return render_template('index.html', ipaddress=ipaddress, socket=socket_info, station_id=station_id,
-                               web_socket_url=web_socket_url,username=username,down_version=down_version)
+        # if len(configinfo_list[0]) == 5:
+        #     web_socket_url = configinfo_list[0][4]
+        # else:
+        #     web_socket_url = ''
+        return render_template('index.html', station_id=station_id, web_socket_url=web_socket_url,
+                               web_socket_heart=web_socket_heart, username=username,
+                               down_version=down_version)
     return render_template('index.html')
+
 
 @app.route('/license', methods=['GET', 'POST'])
 def license():
@@ -127,15 +130,15 @@ def license():
     机库配置页面，存储信息在配置文件中（或者sqllite中），简单的页面读取和页面信息保存
     :return:
     '''
-    config=Config()
-    #(1)读取机器码，默认机库的mac地址
-    activate = ActivateUtils(config,logger)
-    #maccode=activate.getMacCode()
-    maccode=activate.get_unique_identifier()
-    activatecode=""
+    # config=Config()
+    # (1)读取机器码，默认机库的mac地址
+    activate = ActivateUtils(logger)
+    # maccode=activate.getMacCode()
+    maccode = activate.get_unique_identifier()
+    activatecode = ""
     try:
         # 读取已经注册的license
-        activatecode = config.get_license_code()
+        activatecode = Config.get_license_code()
         # 获取剩余天数
         left_days = -1
         if activatecode == "":
@@ -147,6 +150,8 @@ def license():
         return render_template('activate.html', left_days=left_days, maccode=maccode, activatecode=activatecode)
     except Exception as e:
         return render_template('activate.html', left_days="unknown", maccode=maccode, activatecode=activatecode)
+
+
 @app.route('/savelicense', methods=['GET', 'POST'])
 def savelicense():
     '''
@@ -157,14 +162,14 @@ def savelicense():
         params = request.form if request.method == "POST" else request.args
         activatecode = params['activatecode']
         # 保存信息
-        config = Config()
-        config.set_license_code(activatecode)
+        # config = Config()
+        Config.set_license_code(activatecode)
 
-        activate = ActivateUtils(config,logger)
-        #maccode = activate.getMacCode()
+        activate = ActivateUtils(logger)
+        # maccode = activate.getMacCode()
         maccode = activate.get_unique_identifier()
         # 读取已经注册的license
-        activatecode = config.get_license_code()
+        activatecode = Config.get_license_code()
         # 获取剩余天数
         left_days = -1
         if activatecode == "":
@@ -177,7 +182,8 @@ def savelicense():
     except Exception as ex:
         return render_template('activate.html')
 
-#通过验证拦截器
+
+# 通过验证拦截器
 @app.before_request
 def check_license():
     url = request.path  # 当前请求的URL
@@ -187,11 +193,11 @@ def check_license():
     elif "favicon" in url or "static" in url:
         pass
     else:
-        res={}
+        res = {}
         try:
-            config=Config()
-            activate=ActivateUtils(config,logger)
-            license_dic=activate.read_license(config.get_license_code())
+            # config=Config()
+            activate = ActivateUtils(logger)
+            license_dic = activate.read_license(Config.get_license_code())
             date_bool = activate.check_license_date(license_dic['time_str'])
             psw_bool = activate.check_license_psw(license_dic['psw'])
             if psw_bool:
@@ -214,74 +220,78 @@ def check_license():
             res['time'] = ""
             res['msg'] = "激活码无效"
             logger.get_log().info(res)
-        if len(res)!=0 and res['status']==False:
+        if len(res) != 0 and res['status'] == False:
             return "激活码无效或过期，请联系机库厂商"
+
 
 '''
 json格式：获取机库地址配置
 '''
-@app.route('/json_get_config', methods=['GET', 'POST'])
-def json_get_config():
-    response = {
-        "ipaddress": "",
-        "socket": "",
-        "station_id": "",
-        "web_socket_url": ""
-    }
-    # 先读取一个机库配置信息
-    config = Config()
-    configinfo_list = config.getconfiginfo()  # 列表元组的形式
-    if configinfo_list is not None and len(configinfo_list) == 1:
-        ipaddress = configinfo_list[0][1]
-        socket = configinfo_list[0][2]
-        station_id = configinfo_list[0][3]
-        if len(configinfo_list[0]) == 5:
-            web_socket_url = configinfo_list[0][4]
-        else:
-            web_socket_url = ''
-        response["ipaddress"] = ipaddress
-        response["socket"] = socket
-        response["station_id"] = station_id
-        response["web_socket_url"] = web_socket_url
-    logger.get_log().info(f"[json_get_config] response = {response}")
-    return Response(json.dumps(response), mimetype='application/json')
+
+# @app.route('/json_get_config', methods=['GET', 'POST'])
+# def json_get_config():
+#     response = {
+#         "ipaddress": "",
+#         "socket": "",
+#         "station_id": "",
+#         "web_socket_url": ""
+#     }
+#     # 先读取一个机库配置信息
+#     # config = Config()
+#     configinfo_list = Config.get_websocket_config_info()  # 列表元组的形式
+#     if configinfo_list is not None and len(configinfo_list) == 1:
+#         # ipaddress = configinfo_list[0][1]
+#         # socket = configinfo_list[0][2]
+#         # station_id = configinfo_list[0][3]
+#         web_socket_url = configinfo_list[0][1]
+#         # if len(configinfo_list[0]) == 5:
+#         #     web_socket_url = configinfo_list[0][4]
+#         # else:
+#         #     web_socket_url = ''
+#         # response["ipaddress"] = ipaddress
+#         # response["socket"] = socket
+#         # response["station_id"] = station_id
+#         response["web_socket_url"] = web_socket_url
+#     logger.get_log().info(f"[json_get_config] response = {response}")
+#     return Response(json.dumps(response), mimetype='application/json')
 
 
 '''
 json格式：设置机库地址配置，(包括重启)
 '''
 
-
-@app.route('/json_set_config', methods=['GET', 'POST'])
-def json_set_config():
-    params = request.json if request.method == "POST" else request.args
-    logger.get_log().info(f"[json_set_config] request = {params}")
-    request_demo = {
-        "ipaddress": "124.71.225.193",
-        "socket": "18088",
-        "station_id": "95091e705eceda57",
-        "web_socket_url": "ws://api.wogrid.com:15005/95091e705eceda57"
-    }
-    response = {
-        "code": "000000",
-        "message": "成功"
-    }
-    try:
-        config = Config()
-        ipaddress = params['ipaddress']
-        socket = params['socket']
-        station_id = params['station_id']
-        web_socket_url = params['web_socket_url']
-        config.setconfiginfo(ip=ipaddress, socket=socket, station_id=station_id, web_socket_url=web_socket_url)
-        reboot_websocket()
-    except Exception as ex:
-        response["code"] = "000001"
-        response["message"] = "失败"
-        logger.get_log().error(f"[json_set_config] Exception = {ex}")
-        return Response(json.dumps(response), mimetype='application/json')
-
-    logger.get_log().info(f"[json_set_config] response = {response}")
-    return Response(json.dumps(response), mimetype='application/json')
+# @app.route('/json_set_config', methods=['GET', 'POST'])
+# def json_set_config():
+#     params = request.json if request.method == "POST" else request.args
+#     logger.get_log().info(f"[json_set_config] request = {params}")
+#     request_demo = {
+#         "ipaddress": "124.71.225.193",
+#         "socket": "18088",
+#         "station_id": "95091e705eceda57",
+#         "web_socket_url": "ws://api.wogrid.com:15005/95091e705eceda57"
+#     }
+#     response = {
+#         "code": "000000",
+#         "message": "成功"
+#     }
+#     try:
+#         # config = Config()
+#         # ipaddress = params['ipaddress']
+#         # socket = params['socket']
+#         station_id = params['station_id']
+#         web_socket_url = params['web_socket_url']
+#         # Config.set_websocket_config_info(ip=ipaddress, socket=socket, station_id=station_id,
+#         #                                  web_socket_url=web_socket_url, logger=logger)
+#         Config.set_websocket_config_info(station_id=station_id, web_socket_url=web_socket_url, logger=logger)
+#         reboot_websocket()
+#     except Exception as ex:
+#         response["code"] = "000001"
+#         response["message"] = "失败"
+#         logger.get_log().error(f"[json_set_config] Exception = {ex}")
+#         return Response(json.dumps(response), mimetype='application/json')
+#
+#     logger.get_log().info(f"[json_set_config] response = {response}")
+#     return Response(json.dumps(response), mimetype='application/json')
 
 
 '''
@@ -318,14 +328,7 @@ def reboot_websocket():
             try:
                 if webclient is None or webclient.server_service is False:
                     webclient = WebSocketUtil(
-                        server_addr='',
-                        hangerstate=hangstate, wf_state=wf_state, logger=logger, comstate_flag=comstate_flag,
-                        configini=configini, auto_charge=auto_charge, comconfig=comconfig)
-                    # webclient = WebSocketUtilV1(
-                    #     server_addr='ws://124.71.225.193:18088/uav/hangarServer/95091e705eceda57',
-                    #     hangerstate=hangstate, wf_state=wf_state, logger=logger,
-                    #     comstate_flag=comstate_flag, configini=configini,
-                    #     comconfig=comconfig)
+                        server_addr='', logger=logger, auto_charge=auto_charge)
                     webclient.start_service()
                 else:
                     break
@@ -343,25 +346,25 @@ json格式：获取机库挂载配置
 @app.route('/json_get_config_info', methods=['GET', 'POST'])
 def json_get_config_info():
     response = {}
-    response["charge_version"] = configini.get_charge_version()
-    response["wfc_version"] = configini.get_wfc_version()
-    response["wlc_version"] = configini.get_wlc_version()
-    response["down_version"] = configini.get_down_version()
-    response["bar_diff_move"] = boolean_to_10string(configini.get_bar_diff_move())
-    response["GPS"] = boolean_to_10string(configini.get_GPS())
-    response["use_weather"] = boolean_to_10string(configini.get_useweather())
-    response["weather_485"] = boolean_to_10string(configini.get_weather_485())
-    response["rain"] = boolean_to_10string(configini.get_rain())
-    response["rain_num"] = boolean_to_10string(configini.get_rain_num())
-    response["wind"] = boolean_to_10string(configini.get_wind())
-    response["wind_dir"] = boolean_to_10string(configini.get_wind_dir())
-    response["temp_hum"] = boolean_to_10string(configini.get_tem_hum())
-    response["smoke"] = boolean_to_10string(configini.get_smoke())
-    response["wfc_double_connect"] = boolean_to_10string(configini.get_wfc_double_connect())  # 无线充电是否使用USB全双工通信，手动配置进去
-    response["wlc_double_connect"] = boolean_to_10string(configini.get_wlc_double_connect())  # 触点充电，使用全双工通信
-    response["need_auto_charge"] = boolean_to_10string(configini.get_need_auto_charge())  # 是否需要自动充电功能
-    response["need_heartbeat_check"] = boolean_to_10string(configini.get_need_heartbeat_check())  # 是否需要心跳检测功能
-    #response["repeat_bar"] = boolean_to_10string(configini.get_repeat_bar())  # 是否需要充电失败后的推杆夹紧操作
+    response["charge_version"] = Config.get_charge_version()
+    response["wfc_version"] = Config.get_wfc_version()
+    response["wlc_version"] = Config.get_wlc_version()
+    response["down_version"] = Config.get_down_version()
+    response["bar_diff_move"] = Config.get_is_bar_diff_move()
+    response["GPS"] = boolean_to_10string(Config.get_is_gps())
+    response["use_weather"] = boolean_to_10string(Config.get_is_use_weather())
+    response["weather_485"] = boolean_to_10string(Config.get_is_weather_485())
+    response["rain"] = boolean_to_10string(Config.get_is_rain())
+    response["rain_num"] = boolean_to_10string(Config.get_is_rain_num())
+    response["wind"] = boolean_to_10string(Config.get_is_wind())
+    response["wind_dir"] = boolean_to_10string(Config.get_is_wind_dir())
+    response["temp_hum"] = boolean_to_10string(Config.get_is_temp_hum())
+    response["is_parking_temp_hum"] = boolean_to_10string(Config.get_is_parking_temp_hum())
+    response["smoke"] = boolean_to_10string(Config.get_is_smoke())
+    response["wfc_double_connect"] = boolean_to_10string(Config.get_is_wfc_double_connect())  # 无线充电是否使用USB全双工通信，手动配置进去
+    response["wlc_double_connect"] = boolean_to_10string(Config.get_is_wlc_double_connect())  # 触点充电，使用全双工通信
+    response["need_auto_charge"] = boolean_to_10string(Config.get_is_need_auto_charge())  # 是否需要自动充电功能
+    response["need_heartbeat_check"] = boolean_to_10string(Config.get_is_need_heartbeat_check())  # 是否需要心跳检测功能
     logger.get_log().info(f"[json_get_config_info] response = {response}")
     return Response(json.dumps(response), mimetype='application/json')
 
@@ -422,21 +425,22 @@ def json_set_config_info():
         need_heartbeat_check = params['need_heartbeat_check']  # 是否需要心跳检测功能  1:是或选中 0:否或未选中
         down_version = params['down_version']
         indoor_temp = params["indoor_temp"]
-        #repeat_bar=params["repeat_bar"]#是否启用充电失败后，推杆夹紧操作
+        # repeat_bar=params["repeat_bar"]#是否启用充电失败后，推杆夹紧操作
 
-        config = Config()
+        # config = Config()
         # 存储处理
-        config.setDetailConfiginfo(charge_version, wfc_version, bar_diff_move, GPS, use_weather, weather_485, rain,
-                                   rain_num, wind, wind_dir, temp_hum, smoke, down_version, wfc_double_connect,
-                                   wlc_double_connect, need_auto_charge, need_heartbeat_check, indoor_temp, wlc_version)
+        Config.set_config_info(charge_version, wfc_version, bar_diff_move, GPS, use_weather, weather_485, rain,
+                               rain_num, wind, wind_dir, temp_hum, smoke, down_version, wfc_double_connect,
+                               wlc_double_connect, need_auto_charge, need_heartbeat_check, indoor_temp, wlc_version,
+                               logger)
 
         # 是否需要重启websocket接口
         is_reboot = False
-        if not need_heartbeat_check == boolean_to_10string(configini.get_need_heartbeat_check()):
+        if not need_heartbeat_check == boolean_to_10string(Config.get_is_need_heartbeat_check()):
             is_reboot = True
         # 重新加载数据
         time.sleep(5)
-        configini.ini_config()  # 重新从数据库加载
+        # configini.ini_config()  # 重新从数据库加载
 
         #  重启websocket接口
         if is_reboot:
@@ -459,7 +463,7 @@ json格式：获取机库状态
 
 @app.route('/json_get_state', methods=['GET', 'POST'])
 def json_get_state():
-    response = hangstate.get_state_dict()
+    response = HangarState.get_hangar_state_dict()
     logger.get_log().info(f"[json_get_state] response = {response}")
     return Response(json.dumps(response), mimetype='application/json')
 
@@ -503,10 +507,11 @@ def logconfig():
     :return:
     '''
     # 读取数据库当前配置信息状态
-    config_db = Config()
-    log_conf = config_db.get_minio_config()
+    # config_db = Config()
+    log_conf = Config.get_minio_config_info()
     return render_template('logconfig.html', minio_ip=log_conf[0][1], minio_username=log_conf[0][2],
-                           minio_password=log_conf[0][3], minio_dir=log_conf[0][4])
+                           minio_password=log_conf[0][3], minio_dir=log_conf[0][4],
+                           upload_log_url=Config.get_upload_log_url())
 
 
 @app.route('/savelogconfig', methods=['GET', 'POST'])
@@ -516,16 +521,23 @@ def savelogconfig():
     :return:
     '''
     try:
+        logger.get_log().info(f"[http.savelogconfig]日志配置信息保存-开始")
         params = request.form if request.method == "POST" else request.args
+        logger.get_log().info(f"[http.savelogconfig]日志配置信息保存-参数:{params}")
         minio_ip = params['minio_ip']
         minio_username = params['minio_username']
         minio_password = params['minio_password']
         minio_dir = params['minio_dir']
+        upload_log_url = params['upload_log_url']
+        # minio_suffix = params['minio_suffix']
         # 保存信息
-        minio_config = Config()
-        minio_config.set_minio_config(minio_ip, minio_username, minio_password, minio_dir)
+        # minio_config = Config()
+        Config.set_minio_config_info(minio_ip, minio_username, minio_password, minio_dir, logger)
+        Config.set_upload_log_url(upload_log_url)
+        logger.get_log().info(f"[http.savelogconfig]日志配置信息保存-结束,保存成功")
         return logconfig()
     except Exception as ex:
+        logger.get_log().info(f"[http.savelogconfig]日志配置信息保存-异常,异常信息为:{ex}")
         return logconfig()
 
 
@@ -534,7 +546,26 @@ def reboot():
     print('Client restart.')
     # reboot system
     import subprocess
-    subprocess.call(['reboot'])
+    # subprocess.call(["echo 'wkzn123' | bash /home/wkzn/jkstart.sh"])
+    # subprocess.call(["echo","wkzn123","|", "bash", "/home/wkzn/jkstart.sh"],shell=True)
+    # subprocess.call(["bash","/home/wkzn/jkreboot.sh"])
+    # status = subprocess.call('/home/wkzn/jkreboot.sh')
+    try:
+        logger.get_log().info(f"[http.reboot]重启上位机-开始")
+        script_path = '/home/wkzn/JIKUPI/jkreboot.sh'
+        result = subprocess.run([script_path], check=True, stdout=subprocess.PIPE)
+        # subprocess.call(["echo", "wkzn123", "|", "systemctl", "restart","jkstart.service"], stdout=subprocess.PIPE,shell=True)
+        # 执行shell脚本
+        # result = subprocess.run([script_path], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # # 打印输出和错误信息
+        # print(result.stdout)  # 脚本的输出
+        # print(result.stderr)  # 脚本的错误信息
+        # os.popen(script_path)
+        time.sleep(6)
+        logger.get_log().info(f"[http.reboot]重启上位机-结束")
+    except Exception as ex:
+        logger.get_log().info(f"[http.reboot]重启上位机异常,异常信息为:{ex}")
 
 
 @app.route('/testpage', methods=['GET', 'POST'])
@@ -547,22 +578,24 @@ def testpage():
     # result = f"\"hanger_door\": \"{self.hanger_door}\",\"hanger_td_bar\": \"{self.hanger_td_bar}\",\"air_condition\": \"{self.air_condition}\",\"STAT_connet_state\": \"{self.STAT_connet_state}\",\"hanger_lr_bar\": \"{self.hanger_lr_bar}\"," \
     #          f"\"charge_state\": \"{self.wfcstate.get_state()}\",\"hanger_bar\": \"{self.hanger_bar}\",\"uav_controller\": \"{self.uav_controller}\",\"windspeed\": \"{self.windspeed}\",\"winddirction\": \"{self.winddirection}\",\"rain\": \"{self.rain}\""
     # return "{" + result + "}"
-    hanger_door = hangstate.get_hanger_door()
-    hanger_bar = hangstate.get_hanger_bar()
-    hanger_air = hangstate.get_air_condition()
-    hanger_uav = hangstate.get_uav_controller()
+    hanger_door = HangarState.get_hangar_door_state()
+    hanger_bar = HangarState.get_hangar_bar_state()
+    hanger_air = HangarState.get_air_condition_state()
+    hanger_uav = HangarState.get_uav_controller_state()
+    hanger_updown_lift = HangarState.get_updown_lift_state()
+    hanger_turn_lift = HangarState.get_turn_lift_state()
     # 读取操控指令，门开，门关；推杆开，推杆关；空调开，空调关；手柄开，手柄关；
-    config = Config()
-    commond_list = config.getcommond()  # 列表元组的形式
-    coldstoptem = config.get_coldstoptem()
-    coldsenstem = config.get_coldsenstem()
-    hotstoptem = config.get_hotstoptem()
-    hotsenstem = config.get_hotsenstem()
-    hihum=config.get_hihum()
-    lowhum=config.get_lowhum()
+    # config = Config()
+    commond_list = Config.get_operation_command_info()  # 列表元组的形式
+    coldstoptem = Config.get_coldstoptem()
+    coldsenstem = Config.get_coldsenstem()
+    hotstoptem = Config.get_hotstoptem()
+    hotsenstem = Config.get_hotsenstem()
+    hihum = Config.get_hihum()
+    lowhum = Config.get_lowhum()
     if commond_list is None:
         # add table
-        config.createTable()
+        Config.createTable()
     if commond_list is not None and len(commond_list) == 1:
         opendoor = commond_list[0][1]
         closedoor = commond_list[0][2]
@@ -572,11 +605,18 @@ def testpage():
         closeair = commond_list[0][6]
         openuav = commond_list[0][7]
         closeuav = commond_list[0][8]
+        uplift = commond_list[0][9]
+        downlift = commond_list[0][10]
+        turnlift = commond_list[0][11]
+        backlift = commond_list[0][12]
         return render_template('testpage.html', hanger_door=hanger_door, hanger_bar=hanger_bar, hanger_air=hanger_air,
-                               hanger_uav=hanger_uav, opendoor=opendoor, closedoor=closedoor,
-                               openbar=openbar, closebar=closebar, openair=openair, closeair=closeair, openuav=openuav,
-                               closeuav=closeuav,coldstoptem=coldstoptem,coldsenstem=coldsenstem,hotsenstem=hotsenstem,hotstoptem=hotstoptem,
-                               hihum=hihum,lowhum=lowhum)
+                               hanger_uav=hanger_uav, hanger_updown_lift=hanger_updown_lift,
+                               hanger_turn_lift=hanger_turn_lift,
+                               opendoor=opendoor, closedoor=closedoor, openbar=openbar, closebar=closebar,
+                               openair=openair, closeair=closeair, openuav=openuav,
+                               closeuav=closeuav, coldstoptem=coldstoptem, coldsenstem=coldsenstem,
+                               hotsenstem=hotsenstem, hotstoptem=hotstoptem,
+                               hihum=hihum, lowhum=lowhum, turn_lift=turnlift, back_lift=backlift)
     return render_template('testpage.html')
 
 
@@ -589,8 +629,8 @@ def getCommand():
     logger.get_log().info(f"[getCommand]开始执行")
     try:
         # 读取操控指令，门开，门关；推杆开，推杆关；空调开，空调关；手柄开，手柄关；
-        config = Config()
-        commond_list = config.getcommond()  # 列表元组的形式
+        # config = Config()
+        commond_list = Config.get_operation_command_info()  # 列表元组的形式
         if commond_list is not None and len(commond_list) == 1:
             opendoor = commond_list[0][1]
             closedoor = commond_list[0][2]
@@ -623,6 +663,7 @@ def getCommand():
 设置命令(更新DB，并进行执行)
 '''
 
+
 @app.route('/setCommand/<string:command>', methods=['GET', 'POST'])
 def setCommand(command):
     params = request.json if request.method == "POST" else request.args
@@ -638,42 +679,42 @@ def setCommand(command):
     global webclient
 
     result = "error_command"
-    config = Config()
+    # config = Config()
     if command == "140000":
-        config.setcommon_sign(opendoor=command_code)
+        Config.set_operation_command_info_sign(logger=logger, opendoor=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_door_open_140000()
+        result = OperateUtil.operate_hangar("140000")
     elif command == "150000":
-        config.setcommon_sign(closedoor=command_code)
+        Config.set_operation_command_info_sign(logger=logger, closedoor=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_door_close_150000()
+        result = OperateUtil.operate_hangar("150000")
     elif command == "2e10002000":
-        config.setcommon_sign(closebar=command_code)
+        Config.set_operation_command_info_sign(logger=logger, closebar=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_bar_close_2e10002000()
+        result = OperateUtil.operate_hangar("2e10002000")
     elif command == "2f10002000":
-        config.setcommon_sign(openbar=command_code)
+        Config.set_operation_command_info_sign(logger=logger, openbar=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_bar_open_2f10002000()
+        result = OperateUtil.operate_hangar("2f10002000")
     elif command == "500000":
         logger.get_log().info(f"[setCommand] command = {command} 不支持DB设置参数，直接调用方法")
-        result = webclient.step_scene_bar_reset_500000()
+        result = OperateUtil.operate_hangar("500000")
     elif command == "300000":
-        config.setcommon_sign(openair=command_code)
+        Config.set_operation_command_info_sign(logger=logger, openair=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_air_open_300000()
+        result = OperateUtil.operate_hangar("300000")
     elif command == "310000":
-        config.setcommon_sign(closeair=command_code)
+        Config.set_operation_command_info_sign(logger=logger, closeair=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_air_close_310000()
+        result = OperateUtil.operate_hangar("310000")
     elif command == "400000":
-        config.setcommon_sign(openuav=command_code)
+        Config.set_operation_command_info_sign(logger=logger, openuav=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_night_light_open_400000()
+        result = OperateUtil.operate_hangar("400000")
     elif command == "410000":
-        config.setcommon_sign(closeuav=command_code)
+        Config.set_operation_command_info_sign(logger=logger, closeuav=command_code)
         time.sleep(2)  # 操作一下数据库
-        result = webclient.step_scene_night_light_close_410000()
+        result = OperateUtil.operate_hangar("410000")
     else:
         logger.get_log().info(f"暂不支持命令{command}")
     if not result == "error_command":
@@ -684,109 +725,73 @@ def setCommand(command):
     return Response(json.dumps(response), mimetype='application/json')
 
 
-'''
-执行命令(仅仅执行，不更新DB)
-'''
-
-
 @app.route('/doCommand/<string:command>', methods=['GET', 'POST'])
 def doCommand(command):
+    """
+    手柄调用
+    """
     response = {
         "code": "error_command",
         "message": "不支持的命令"
     }
-    global webclient
-    logger.get_log().info(f"测试执行{command}命令")
-    result = "error_command"
-    if command == "A000":
-        result = webclient.big_scene_A000()
-        #2023-927
-        # 开灯
-        # 如果是开门操作，则做开灯操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-        lightcontroller.open_light()
-    elif command == "A010":
-        result = webclient.big_scene_A010()
-        # 2023-927
-        # 开灯
-        # 如果是开门操作，则做开灯操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-        lightcontroller.open_light()
-
-    elif command == "A100":
-        result = webclient.big_scene_A100()
-        # 2023-927
-        # 关灯
-        # 如果是关门操作，则做关灯操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-        lightcontroller.close_light()
-    elif command == "A200":
-        result = webclient.big_scene_A200()
-    elif command == "B000":
-        result = webclient.big_scene_B000()
-        # 2023-927
-        # 开灯
-        # 如果是开门操作，则做开灯操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-        lightcontroller.open_light()
-    elif command == "B100":
-        result = webclient.big_scene_B100()
-        # 2023-927
-        # 关灯
-        # 如果是关门操作，则做关灯操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-        lightcontroller.close_light()
-    elif command == "B200":
-        result = webclient.big_scene_B200()
-    elif command == "C000":
-        result = webclient.big_scene_C000()
-    elif command == "C100":
-        result = webclient.big_scene_C100()
-    elif command == "140000":
-        result = webclient.step_scene_door_open_140000()
-    elif command == "150000":
-        result = webclient.step_scene_door_close_150000()
-    elif command == "2e10002000":
-        result = webclient.step_scene_bar_close_2e10002000()
-    elif command == "2f10002000":
-        result = webclient.step_scene_bar_open_2f10002000()
-    elif command == "500000":
-        result = webclient.step_scene_bar_reset_500000()
-    elif command == "300000":
-        result = webclient.step_scene_air_open_300000()
-    elif command == "310000":
-        result = webclient.step_scene_air_close_310000()
-    elif command == "400000":
-        result = webclient.step_scene_night_light_open_400000()
-    elif command == "410000":
-        result = webclient.step_scene_night_light_close_410000()
-    elif command == "dt0000":
-        result = webclient.step_scene_drone_takeoff_dt0000()
-    elif command == "dd0000":
-        result = webclient.step_scene_drone_off_dd0000()
-    elif command == "cp0000":
-        result = webclient.step_scene_drone_charge_cp0000()
-    elif command == "ck0000":
-        result = webclient.step_scene_drone_check_ck0000()
-    elif command == "sb0000":
-        result = webclient.step_scene_drone_standby_sb0000()
-    elif command == "c00000":
-        result = webclient.step_scene_auto_charge_on_c00000()
-    elif command == "c10000":
-        result = webclient.step_scene_auto_charge_off_c10000()
-    else:
-        logger.get_log().info(f"暂不支持命令{command}")
+    logger.get_log().info(f"[http.doCommand]手柄调用-开始,执行{command}命令")
+    result = OperateUtil.operate_hangar(command)
+    logger.get_log().info(f"[http.doCommand]手柄调用-结束,执行{command}命令,返回结果{result}")
     if not result == "error_command":
         resultCodeDict = ResultCodeDict()
         response["code"] = result
         response["message"] = resultCodeDict.get_msg(result)
     return Response(json.dumps(response), mimetype='application/json')
-    # return result
+
+
+# ===============================手柄操控===============================start
+@app.route('/operhanger', methods=['GET', 'POST'])
+def operhanger():
+    """
+    手柄调用
+    """
+    params = request.json if request.method == "POST" else request.args
+    # 解析传递过来的参数
+    try:
+        if params is not None:  #
+            commond = params['commond']
+            logger.get_log().info(f"[http.operhanger]手柄调用-开始,执行{commond}命令")
+            result = OperateUtil.operate_hangar(commond)
+            logger.get_log().info(f"[http.operhanger]手柄调用-结束,执行{commond}命令,返回结果为:{result}")
+            return result
+        else:
+            logger.get_log().info(f"[http.operhanger]手柄调用-异常,参数为空")
+            return "参数是空"
+    except Exception as ex:
+        logger.get_log().info(f"[http.operhanger]手柄调用-异常,异常信息为:{ex}")
+        return BusinessConstant.ERROR
+
+
+@app.route('/opercharge', methods=['GET', 'POST'])
+def oper_charge():
+    """
+    手柄调用,无人机充电
+    :return:
+    """
+    params = request.json if request.method == "POST" else request.args
+    # 解析传递过来的参数
+    try:
+        if params is not None:  #
+            commond = params['commond']
+            logger.get_log().info(f"[http.opercharge]手柄调用-开始,执行{commond}命令")
+            if commond in ["Charge", "TakeOff", "Standby", "DroneOff", "Check", "DisplayOn", "DisplayOff", "Connect"]:
+                return OperateUtil.operate_hangar(commond)
+            else:
+                return "充电操作命令错误"
+        else:
+            logger.get_log().info(f"[http.operhanger]手柄调用-异常,参数为空")
+            return "充电操作命令为空"
+    except Exception as e:
+        logger.get_log().info(f'工控机调用充电异常，异常{e}')
+        return "error"
+
+
+# ===============================手柄操控===============================end
 
 
 @app.route('/config', methods=['GET', 'POST'])
@@ -796,37 +801,41 @@ def configpage():
     :return:
     '''
     # 读取当前配置信息状态
-    #print(f"night_light={type(configini.get_night_light())}")
-    #print(f"repeat={type(configini.get_repeat_bar())}")
-    return render_template('config.html', charge_version=configini.get_charge_version(),
-                           wlc_version=configini.get_wlc_version(),
-                           wfc_version=configini.get_wfc_version(), down_version=configini.get_down_version(),
-                           bar_diff_move=configini.get_bar_diff_move(),
-                           GPS=configini.get_GPS(), use_weather=configini.get_useweather(),
-                           weather_485=configini.get_weather_485(),
-                           rain=configini.get_rain(), rain_num=configini.get_rain_num(), wind=configini.get_wind(),
-                           wind_dir=configini.get_wind_dir(), temp_hum=configini.get_tem_hum(),
-                           smoke=configini.get_smoke(), wfc_double_connect=configini.get_wfc_double_connect(),
-                           wlc_double_connect=configini.get_wlc_double_connect(),
-                           need_auto_charge=configini.get_need_auto_charge(),
-                           need_heartbeat_check=configini.get_need_heartbeat_check(),
-                           indoor_temp=configini.get_indoor_temp(),
-                           night_light=configini.get_night_light(),
-                           night_light_time_begin=configini.get_night_light_time_begin(),
-                           night_light_time_end=configini.get_night_light_time_end(),
-                           repeat_bar=configini.get_repeat_bar(),
-                           night_charge=configini.get_night_charge(),
-                           night_light_time=configini.get_night_light_time(),
-                           signal_battery_charge=config.get_signal_battery_charge(),
-                           weather_wait_time=config.get_weather_wait_time(),
-                           aircon485=config.get_aircon485(),
-                           meanopen=config.get_meanopen(),
-                           alarm=config.get_alarm(),
-                           bar_move_style=config.get_bar_move_style(),
-                           controller_ip=config.get_controller_ip(),
-                           con_server_ip_port=config.get_con_server_ip_port(),
-                           td_bar=config.get_td_bar(),
-                           blance_charge=config.get_blance_charge())
+    # print(f"night_light={type(configini.get_night_light())}")
+    # print(f"repeat={type(configini.get_repeat_bar())}")
+    return render_template('config.html', charge_version=Config.get_charge_version(),
+                           wlc_version=Config.get_wlc_version(),
+                           wfc_version=Config.get_wfc_version(), down_version=Config.get_down_version(),
+                           bar_diff_move=Config.get_is_bar_diff_move(),
+                           GPS=Config.get_is_gps(), use_weather=Config.get_is_use_weather(),
+                           weather_485=Config.get_is_weather_485(),
+                           rain=Config.get_is_rain(), rain_num=Config.get_is_rain_num(), wind=Config.get_is_wind(),
+                           wind_dir=Config.get_is_wind_dir(), temp_hum=Config.get_is_temp_hum(),
+                           is_parking_temp_hum=Config.get_is_parking_temp_hum(),
+                           smoke=Config.get_is_smoke(), wfc_double_connect=Config.get_is_wfc_double_connect(),
+                           wlc_double_connect=Config.get_is_wlc_double_connect(),
+                           need_auto_charge=Config.get_is_need_auto_charge(),
+                           need_heartbeat_check=Config.get_is_need_heartbeat_check(),
+                           indoor_temp=Config.get_is_indoor_temp(),
+                           night_light=Config.get_is_night_light(),
+                           night_light_time_begin=Config.get_night_light_time_begin(),
+                           night_light_time_end=Config.get_night_light_time_end(),
+                           repeat_bar=Config.get_is_repeat_bar(),
+                           night_charge=Config.get_is_night_charge(),
+                           night_light_time=Config.get_is_night_light_time(),
+                           signal_battery_charge=Config.get_is_signal_battery_charge(),
+                           weather_wait_time=Config.get_weather_wait_time(),
+                           aircon485=Config.get_is_aircon485(),
+                           meanopen=Config.get_is_meanopen(),
+                           alarm=Config.get_is_alarm(),
+                           alarm_light=Config.get_is_alarm_light(),
+                           bar_move_style=Config.get_bar_move_style(),
+                           air_condition_computer_version=Config.get_air_condition_computer_version(),
+                           hangar_version=Config.get_hangar_version(),
+                           controller_ip=Config.get_controller_ip(),
+                           con_server_ip_port=Config.get_con_server_ip_port(),
+                           td_bar=Config.get_is_td_bar(),
+                           blance_charge=Config.get_is_blance_charge())
 
 
 @app.route('/mqtt', methods=['GET', 'POST'])
@@ -875,8 +884,9 @@ def saveconfigpage():
         '''
     # 读取当前配置信息状态
     try:
-        config = Config()
+        # config = Config()
         params = request.form if request.method == "POST" else request.args
+        logger.get_log().info(f"[saveconfigpage]参数设置{params}")
         charge_version = params['charge_version']
         if charge_version == "无线充电":
             charge_version = "wfc"
@@ -884,66 +894,72 @@ def saveconfigpage():
             charge_version = "wlc"
         wfc_version = params['wfc_version']
         wlc_version = params['wlc_version']
-        bar_diff_move = '0'
-        GPS = '0'
-        use_weather = '0'
-        weather_485 = '0'
-        rain = '0'
-        rain_num = '0'
-        wind = '0'
-        wind_dir = '0'
-        temp_hum = '0'
-        smoke = '0'
-        wfc_double_connect = '0'  # 无线充电是否使用USB全双工通信，手动配置进去
-        wlc_double_connect = '0'  # 触点充电，使用全双工通信
-        need_auto_charge = '0'  # 是否需要自动充电功能
-        need_heartbeat_check = '0'  # 是否需要心跳检测功能
+        bar_diff_move = 'False'
+        GPS = 'False'
+        use_weather = 'False'
+        weather_485 = 'False'
+        rain = 'False'
+        rain_num = 'False'
+        wind = 'False'
+        wind_dir = 'False'
+        temp_hum = 'False'
+        is_parking_temp_hum = 'False'
+        smoke = 'False'
+        wfc_double_connect = 'False'  # 无线充电是否使用USB全双工通信，手动配置进去
+        wlc_double_connect = 'False'  # 触点充电，使用全双工通信
+        need_auto_charge = 'False'  # 是否需要自动充电功能
+        need_heartbeat_check = 'False'  # 是否需要心跳检测功能
         down_version = params['down_version']
-        indoor_temp = '0'  # 是否读取室内温湿度
+        indoor_temp = 'False'  # 是否读取室内温湿度
         night_light = 'False'  # 是否需要夜间灯功能
-        repeat_bar='False'
-        night_charge='False'
-        night_light_time='False'
-        signal_battery_charge='False'
-        weather_wait_time='10'
-        aircon485='False'
+        repeat_bar = 'False'
+        night_charge = 'False'
+        night_light_time = 'False'
+        signal_battery_charge = 'False'
+        weather_wait_time = '10'
+        aircon485 = 'False'
         meanopen = 'False'
-        alarm='False'
-        bar_move_style=params['bar_move_style']
-        controller_ip=""
-        td_bar='False'
-        blance_charge='False'
+        alarm = 'False'
+        alarm_light = 'False'
+        bar_move_style = params['bar_move_style']
+        air_condition_computer_version = params['air_condition_computer_version']
+        hangar_version = params['hangar_version']
+        controller_ip = ""
+        td_bar = 'False'
+        blance_charge = 'False'
 
         if 'bar_diff_move' in params.keys():
-            bar_diff_move = '1'
+            bar_diff_move = 'True'
         if "GPS" in params.keys():
-            GPS = '1'
+            GPS = 'True'
         if "use_weather" in params.keys():
-            use_weather = '1'
+            use_weather = 'True'
         if "weather_485" in params.keys():
-            weather_485 = '1'
+            weather_485 = 'True'
         if "rain" in params.keys():
-            rain = '1'
+            rain = 'True'
         if "rain_num" in params.keys():
-            rain_num = '1'
+            rain_num = 'True'
         if "wind" in params.keys():
-            wind = '1'
+            wind = 'True'
         if "wind_dir" in params.keys():
-            wind_dir = '1'
+            wind_dir = 'True'
         if "temp_hum" in params.keys():
-            temp_hum = '1'
+            temp_hum = 'True'
+        if "is_parking_temp_hum" in params.keys():
+            is_parking_temp_hum = 'True'
         if "smoke" in params.keys():
-            smoke = '1'
+            smoke = 'True'
         if "wfc_double_connect" in params.keys():
-            wfc_double_connect = '1'
+            wfc_double_connect = 'True'
         if "wlc_double_connect" in params.keys():
-            wlc_double_connect = '1'
+            wlc_double_connect = 'True'
         if "need_auto_charge" in params.keys():
-            need_auto_charge = '1'
+            need_auto_charge = 'True'
         if "need_heartbeat_check" in params.keys():
-            need_heartbeat_check = '1'
+            need_heartbeat_check = 'True'
         if "indoor_temp" in params.keys():
-            indoor_temp = '1'
+            indoor_temp = 'True'
         if "night_light" in params.keys():
             night_light = 'True'
         if "repeat_bar" in params.keys():
@@ -953,13 +969,15 @@ def saveconfigpage():
         if "night_light_time" in params.keys():
             night_light_time = 'True'
         if "signal_battery_charge" in params.keys():
-            signal_battery_charge="True"
+            signal_battery_charge = "True"
         if "aircon485" in params.keys():
             aircon485 = 'True'
         if "meanopen" in params.keys():
             meanopen = 'True'
         if "alarm" in params.keys():
             alarm = 'True'
+        if "alarm_light" in params.keys():
+            alarm_light = 'True'
         if "td_bar" in params.keys():
             td_bar = 'True'
         if "blance_charge" in params.keys():
@@ -969,200 +987,150 @@ def saveconfigpage():
             f"{charge_version},{wfc_version},{bar_diff_move},{GPS},{use_weather},{weather_485},{rain},{rain_num},{wind},{wind_dir},{temp_hum},{smoke},{down_version},{wfc_double_connect},{wlc_double_connect},{need_auto_charge},{need_heartbeat_check},{indoor_temp},{wlc_version},{repeat_bar},{night_charge}")
         # 存储处理
         # 老版本存储方法
-        config.setDetailConfiginfo(charge_version, wfc_version, bar_diff_move, GPS, use_weather, weather_485, rain,
-                                   rain_num, wind, wind_dir, temp_hum, smoke, down_version, wfc_double_connect,
-                                   wlc_double_connect, need_auto_charge, need_heartbeat_check, indoor_temp, wlc_version)
+        Config.set_config_info(charge_version, wfc_version, bar_diff_move, GPS, use_weather, weather_485, rain,
+                               rain_num, wind, wind_dir, temp_hum, smoke, down_version, wfc_double_connect,
+                               wlc_double_connect, need_auto_charge, need_heartbeat_check, indoor_temp, wlc_version,
+                               logger)
         # 新追加处理字段
-        config.set_night_light(night_light)
-        config.set_night_light_time_begin(params["night_light_time_begin"])
-        config.set_night_light_time_end(params["night_light_time_end"])
-        config.set_repeat_bar(repeat_bar)
-        config.set_night_charge(night_charge)
-        config.set_night_light_time(night_light_time)
-        config.set_signal_battery_charge(signal_battery_charge)
-        config.set_weather_wait_time(params["weather_wait_time"])
-        config.set_aircon485(aircon485)
-        config.set_meanopen(meanopen)
-        config.set_alarm(alarm)
-        config.set_bar_move_style(params["bar_move_style"])
-        config.set_controller_ip(params["controller_ip"])
-        config.set_con_server_ip_port(params["con_server_ip_port"])
-        config.set_td_bar(td_bar)
-        config.set_blance_charge(blance_charge)
+        Config.set_is_night_light(night_light)
+        Config.set_night_light_time_begin(params["night_light_time_begin"])
+        Config.set_night_light_time_end(params["night_light_time_end"])
+        Config.set_is_repeat_bar(repeat_bar)
+        Config.set_is_night_charge(night_charge)
+        Config.set_is_night_light_time(night_light_time)
+        Config.set_is_signal_battery_charge(signal_battery_charge)
+        Config.set_weather_wait_time(params["weather_wait_time"])
+        Config.set_is_aircon485(aircon485)
+        Config.set_is_meanopen(meanopen)
+        Config.set_is_alarm(alarm)
+        Config.set_is_alarm_light(alarm_light)
+        Config.set_bar_move_style(params["bar_move_style"])
+        Config.set_controller_ip(params["controller_ip"])
+        Config.set_con_server_ip_port(params["con_server_ip_port"])
+        Config.set_is_td_bar(td_bar)
+        Config.set_is_blance_charge(blance_charge)
+        Config.set_air_condition_computer_version(air_condition_computer_version)
+        Config.set_hangar_version(hangar_version)
+        Config.set_is_parking_temp_hum(is_parking_temp_hum)
         time.sleep(5)
         # 重新启动系统
-        try:
-            configini.ini_config()  # 重新从数据库加载
-        except Exception as ex:
-            print(f"{ex}")
+        # try:
+        #     configini.ini_config()  # 重新从数据库加载
+        # except Exception as ex:
+        #     print(f"{ex}")
         return "请重新启动服务程序"
     except Exception as ex:
         return render_template('config.html')
 
 
-def bar_use_check(commond):
-    if commond.startswith("2f") or commond.startswith("50"):#推杆打开操作或者复位操作
-        exe_charge_commond("standby")#充电先做一次复位操作
-    result = ""
-    # 2023-4-4 如果是空调操作指令，并且启用了空调485通信
-    if configini.get_aircon485() == True and commond.startswith('3'):
-        airManager = AirConditionOper(hangstate.get_airstate(), hangstate, comconfig, logger)
-        if commond.startswith('30'):  # 开空调
-            airManager.openAircondition()
-            hangstate.set_air_condition('open')
-            result = '9300'
-        else:
-            airManager.closeAircondition()
-            hangstate.set_air_condition('close')
-            result = '9310'
-
-    else:
-        # 如果使用485读取天气，则不作waiting处理
-        if configini.weather_485 == True:
-            if comstate_flag.get_bar_isused() == False:
-                logger.get_log().info(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}http推杆调用，收到命令{commond}")
-                comstate_flag.set_bar_used()
-                try:
-                    statCom_bar = JKSATACOM(hangstate, comconfig.get_device_info_bar(), comconfig.get_bps_bar(),
-                                            comconfig.get_timeout_bar(), logger, 0)
-                    jkbar = JKBarServer(statCom_bar, hangstate, logger, configini)
-                    result = jkbar.operator_hanger(commond)
-                    comstate_flag.set_bar_free()
-                    logger.get_log().info(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，返回{result}")
-                except Exception as barex:
-                    comstate_flag.set_bar_free()
-            else:
-                logger.get_log().info(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，推杆端口被占用，返回busy")
-                result = "busy"
-        else:  # 使用推杆串口读取天气信息
-            # 否则做waiting处理
-            logger.get_log().info(
-                f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，使用推杆串口读取天气信息，收到命令{commond}")
-            if comstate_flag.get_bar_isused() == False or comstate_flag.get_bar_waiting() == False:  # 串口没被占用或者天气在占用（天气占用的时候，waiting是False）
-                # 第一步先判断是否是天气串口在使用，waiting=false,used=true,这个时候等待5秒，再做检测
-                # 如果是waiting=false,used=false 可以直接使用
-                # 如果是waiting=true,used=False 有另外高级命令在执行，直接失败
-                if comstate_flag.get_bar_isused() == False and comstate_flag.get_bar_waiting() == True:
-                    logger.get_log().info(
-                        f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆串口调用，上个推杆命令在执行等待,本次命令不执行，收到的命令是{commond}")
-                    time.sleep(10)
-                    result = "error"
-                elif comstate_flag.get_bar_isused() == False and comstate_flag.get_bar_waiting() == False:
-                    if not commond.startswith("70"):  # 调用推拉杆
-                        logger.get_log().info(
-                            f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，有天气共用串口，可以执行本次命令，执行命令{commond}")
-                    comstate_flag.set_bar_waiting()
-                    comstate_flag.set_bar_used()
-                    try:
-                        statCom_bar = JKSATACOM(hangstate, comconfig.get_device_info_bar(), comconfig.get_bps_bar(),
-                                                comconfig.get_timeout_bar(), logger, 0)
-                        jkbar = JKBarServer(statCom_bar, hangstate, logger, configini)
-                        result = jkbar.operator_hanger(commond)
-                        comstate_flag.set_bar_waiting_free()
-                        comstate_flag.set_bar_free()
-                    except Exception as barex:
-                        comstate_flag.set_bar_waiting_free()
-                        comstate_flag.set_bar_free()
-                    comstate_flag.set_bar_waiting_free()
-                else:  # 天气在使用，先锁定等待，然后5秒后再检测是否被占用，如果占用则失败
-                    # 如果此时bar_is_used==True,如何处理？
-                    logger.get_log().info(
-                        f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，天气占用串口，等待4秒后继续执行，执行命令{commond}")
-                    comstate_flag.set_bar_waiting()
-                    time.sleep(4)
-                    if comstate_flag.get_bar_isused() == False:
-                        comstate_flag.set_bar_waiting()
-                        comstate_flag.set_bar_used()
-                        try:
-                            statCom_bar = JKSATACOM(hangstate, comconfig.get_device_info_bar(),
-                                                    comconfig.get_bps_bar(),
-                                                    comconfig.get_timeout_bar(), logger, 0)
-                            jkbar = JKBarServer(statCom_bar, hangstate, logger, configini)
-                            result = jkbar.operator_hanger(commond)
-                            comstate_flag.set_bar_waiting_free()
-                            comstate_flag.set_bar_free()
-                            logger.get_log().info(
-                                f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，天气占用串口，等待4秒后，执行命令{commond}，执行结果为{result}")
-                        except Exception as barex:
-                            comstate_flag.set_bar_waiting_free()
-                            comstate_flag.set_bar_free()
-                    else:  # 失败
-                        logger.get_log().info(
-                            f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，天气占用串口，等待4秒后，执行命令{commond},端口仍然被占用,失败，busy")
-                        time.sleep(5)
-                        result = "busy"
-                    comstate_flag.set_bar_waiting_free()
-            else:
-                logger.get_log().info(
-                    f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，执行命令{commond},端口被占用,失败，busy")
-                time.sleep(5)
-                result = "busy"
-    return result
+# def bar_use_check(commond):
+#     if commond.startswith("2f") or commond.startswith("50"):  # 推杆打开操作或者复位操作
+#         exe_charge_commond("standby")  # 充电先做一次复位操作
+#     result = ""
+#     # 2023-4-4 如果是空调操作指令，并且启用了空调485通信
+#     if Config.get_is_aircon485() == True and commond.startswith('3'):
+#         airManager = AirConditionOper(logger)
+#         if commond.startswith('30'):  # 开空调
+#             airManager.openAircondition()
+#             HangarState.set_air_condition_state('open')
+#             result = '9300'
+#         else:
+#             airManager.closeAircondition()
+#             HangarState.set_air_condition_state('close')
+#             result = '9310'
+#     else:
+#         # 如果使用485读取天气，则不作waiting处理
+#         if Config.get_is_weather_485() is True:
+#             if SerialUsedStateFlag.get_is_used_serial_bar() == False:
+#                 logger.get_log().info(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}http推杆调用，收到命令{commond}")
+#                 SerialUsedStateFlag.set_used_serial_bar()
+#                 try:
+#                     statCom_bar = JKSATACOM(USBDeviceConfig.get_serial_usb_bar(), USBDeviceConfig.get_serial_bps_bar(),
+#                                             USBDeviceConfig.get_serial_timeout_bar(), logger, 0)
+#                     jkbar = JKBarServer(statCom_bar, logger)
+#                     result = jkbar.operator_hanger(commond)
+#                     SerialUsedStateFlag.set_used_serial_free_bar()
+#                     logger.get_log().info(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，返回{result}")
+#                 except Exception as barex:
+#                     SerialUsedStateFlag.set_used_serial_free_bar()
+#             else:
+#                 logger.get_log().info(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())} http推杆调用，推杆端口被占用，返回busy")
+#                 result = "busy"
+#
+#     return result
 
 
-def commonfun(commond):
-    result = ''
-    if commond.startswith("1") or commond.startswith("4"):  # 门的操作
-        if comstate_flag.get_door_isused() == False:  # 串口没有在使用
-            comstate_flag.set_door_used()
-            try:
-                logger.get_log().info(f'页面调用,机库门操作,{commond}')
-                statCom_door = JKSATACOM(hangstate, comconfig.get_device_info_door(), comconfig.get_bps_door(),
-                                         comconfig.get_timeout_door(), logger, 0)
-                jkdoor = JKDoorServer(statCom_door, hangstate, logger)
-                result = jkdoor.operator_hanger(commond)
-                comstate_flag.set_door_free()
-            except Exception as doorex:
-                comstate_flag.set_door_free()
-        else:
-            result = "busy"
-    else:#推杆的操作
-        result = bar_use_check(commond)
-    try:
-        # 如果有门的操作，则做一下灯光操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-
-        if commond.startswith("14"):
-            lightcontroller.open_light()
-        elif commond.startswith("15"):
-            lightcontroller.close_light()
-    except Exception as excpte:
-        print(f"-----------灯光异常{excpte}------------")
-    hanger_door = hangstate.get_hanger_door()
-    hanger_bar = hangstate.get_hanger_bar()
-    hanger_air = hangstate.get_air_condition()
-    hanger_uav = hangstate.get_uav_controller()
-    # 读取操控指令，门开，门关；推杆开，推杆关；空调开，空调关；手柄开，手柄关；
-    config = Config()
-    commond_list = config.getcommond()  # 列表元组的形式
-    if commond_list is None:
-        # add table
-        config.createTable()
-    if commond_list is not None and len(commond_list) == 1:
-        opendoor = commond_list[0][1]
-        closedoor = commond_list[0][2]
-        openbar = commond_list[0][3]
-        closebar = commond_list[0][4]
-        openair = commond_list[0][5]
-        closeair = commond_list[0][6]
-        openuav = commond_list[0][7]
-        closeuav = commond_list[0][8]
-        return render_template('testpage.html', hanger_door=hanger_door, hanger_bar=hanger_bar,
-                               hanger_air=hanger_air, hanger_uav=hanger_uav, opendoor=opendoor, closedoor=closedoor,
-                               openbar=openbar, closebar=closebar, openair=openair, closeair=closeair,
-                               openuav=openuav, closeuav=closeuav)
+# def commonfun(commond):
+#     result = ''
+#     if commond.startswith("1") or commond.startswith("4"):  # 门的操作
+#         if commond.startswith("14"):  # 开门
+#             result = OperateUtil.step_scene_door_open_140000(logger)  # 开门、开灯
+#         elif commond.startswith("15"):  # 关门
+#             result = OperateUtil.step_scene_door_close_150000(logger)  # 关门、关灯
+#         elif commond.startswith("40"):  # 开灯
+#             result = OperateUtil.step_scene_night_light_open_400000(logger)
+#         elif commond.startswith("41"):  # 关灯
+#             result = OperateUtil.step_scene_night_light_close_410000(logger)
+#         # if SerialUsedStateFlag.get_is_used_serial_door() == False:  # 串口没有在使用
+#         #     SerialUsedStateFlag.set_used_serial_door()
+#         #     try:
+#         #         logger.get_log().info(f'页面调用,机库门操作,{commond}')
+#         #         statCom_door = JKSATACOM(USBDeviceConfig.get_serial_usb_door(), USBDeviceConfig.get_serial_bps_door(),
+#         #                                  USBDeviceConfig.get_serial_timeout_door(), logger, 0)
+#         #         jkdoor = JKDoorServer(statCom_door, logger)
+#         #         result = jkdoor.operator_hanger(commond)
+#         #         SerialUsedStateFlag.set_used_serial_free_door()
+#         #     except Exception as doorex:
+#         #         SerialUsedStateFlag.set_used_serial_free_door()
+#         # else:
+#         #     result = "busy"
+#     else:  # 推杆的操作
+#         result = webclient.bar_use_check(commond)
+#     # try:
+#     #     # 如果有门的操作，则做一下灯光操作
+#     #     lightcontroller = LightController(logger=logger)
+#     #
+#     #     if commond.startswith("14"):
+#     #         lightcontroller.open_light()
+#     #     elif commond.startswith("15"):
+#     #         lightcontroller.close_light()
+#     # except Exception as excpte:
+#     #     print(f"-----------灯光异常{excpte}------------")
+#     hanger_door = HangarState.get_hangar_door_state()
+#     hanger_bar = HangarState.get_hangar_bar_state()
+#     hanger_air = HangarState.get_air_condition_state()
+#     hanger_uav = HangarState.get_uav_controller_state()
+#     # 读取操控指令，门开，门关；推杆开，推杆关；空调开，空调关；手柄开，手柄关；
+#     # config = Config()
+#     commond_list = Config.get_operation_command_info()  # 列表元组的形式
+#     if commond_list is None:
+#         # add table
+#         Config.createTable()
+#     if commond_list is not None and len(commond_list) == 1:
+#         opendoor = commond_list[0][1]
+#         closedoor = commond_list[0][2]
+#         openbar = commond_list[0][3]
+#         closebar = commond_list[0][4]
+#         openair = commond_list[0][5]
+#         closeair = commond_list[0][6]
+#         openuav = commond_list[0][7]
+#         closeuav = commond_list[0][8]
+#         return render_template('testpage.html', hanger_door=hanger_door, hanger_bar=hanger_bar,
+#                                hanger_air=hanger_air, hanger_uav=hanger_uav, opendoor=opendoor, closedoor=closedoor,
+#                                openbar=openbar, closebar=closebar, openair=openair, closeair=closeair,
+#                                openuav=openuav, closeuav=closeuav)
 
 
 @app.route('/opendoor', methods=['GET', 'POST'])
 def opendoor():
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
+        # config = Config()
         commond = params['opendoorcomm']
-        config.setcommon_sign(opendoor=commond)
-        time.sleep(2)  # 操作一下数据库
-        return commonfun(commond)
+        Config.set_operation_command_info_sign(logger=logger, opendoor=commond)
+        # time.sleep(2)  # 操作一下数据库
+        logger.get_log().info(f"[http.opendoor]页面调用开门")
+        return OperateUtil.operate_hangar("140000")
     except Exception as ex:
         return render_template('testpage.html')
 
@@ -1171,11 +1139,12 @@ def opendoor():
 def closedoor():
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
+        # config = Config()
         commond = params['closedoorcomm']
-        config.setcommon_sign(closedoor=commond)
-        time.sleep(2)  # 操作一下数据库
-        return commonfun(commond)
+        Config.set_operation_command_info_sign(logger=logger, closedoor=commond)
+        # time.sleep(2)  # 操作一下数据库
+        logger.get_log().info(f"[http.closedoor]页面调用关门")
+        return OperateUtil.operate_hangar("150000")
     except Exception as ex:
         return render_template('testpage.html')
 
@@ -1184,11 +1153,28 @@ def closedoor():
 def openbar():
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
+        # config = Config()
         commond = params['openbarcomm']
-        config.setcommon_sign(openbar=commond)
-        time.sleep(2)  # 操作一下数据库
-        return commonfun(commond)
+        Config.set_operation_command_info_sign(logger=logger, openbar=commond)
+        # time.sleep(2)  # 操作一下数据库
+        # return commonfun(commond)
+        logger.get_log().info(f"[http.openbar]页面调用推杆打开")
+        return OperateUtil.operate_hangar("2f10002000")
+    except Exception as ex:
+        return render_template('testpage.html')
+
+# 前后推杆打开
+@app.route('/opentdbar', methods=['GET', 'POST'])
+def opentdbar():
+    try:
+        params = request.form if request.method == "POST" else request.args
+        # config = Config()
+        commond = "2f2000"
+        # Config.set_operation_command_info_sign(logger=logger, openbar=commond)
+        # time.sleep(2)  # 操作一下数据库
+        # return commonfun(commond)
+        logger.get_log().info(f"[http.opentdbar]页面调用前后推杆打开")
+        return OperateUtil.operate_hangar(commond)
     except Exception as ex:
         return render_template('testpage.html')
 
@@ -1197,11 +1183,39 @@ def openbar():
 def closebar():
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
+        # config = Config()
         commond = params['closebarcomm']
-        config.setcommon_sign(closebar=commond)
-        time.sleep(2)  # 操作一下数据库
-        return commonfun(commond)
+        Config.set_operation_command_info_sign(logger=logger, closebar=commond)
+        # time.sleep(2)  # 操作一下数据库
+        # return commonfun(commond)
+        logger.get_log().info(f"[http.closebar]页面调用推杆夹紧")
+        return OperateUtil.operate_hangar("2e10002000")
+    except Exception as ex:
+        return render_template('testpage.html')
+
+
+@app.route('/turnLift', methods=['GET', 'POST'])
+def turnLift():
+    try:
+        params = request.form if request.method == "POST" else request.args
+        # config = Config()
+        commond = params['turnliftcomm']
+        Config.set_operation_command_info_sign(logger=logger, turnlift=commond)
+        result = OperateUtil.operate_hangar("800000")
+        return result
+    except Exception as ex:
+        return render_template('testpage.html')
+
+
+@app.route('/backLift', methods=['GET', 'POST'])
+def backLift():
+    try:
+        params = request.form if request.method == "POST" else request.args
+        # config = Config()
+        commond = params['backliftcomm']
+        Config.set_operation_command_info_sign(logger=logger, backlift=commond)
+        result = OperateUtil.operate_hangar("810000")
+        return result
     except Exception as ex:
         return render_template('testpage.html')
 
@@ -1210,16 +1224,20 @@ def closebar():
 def openair():
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
+        # config = Config()
         commond = params['openaircomm']
-        if config.get_aircon485():
-            aircontroller = AirCondition.AirConditionComputer.AirConditionOper(airconstate, hangstate, comconfig,
-                                                                               logger)
-            aircontroller.openAircondition()
-            return "success"
-        config.setcommon_sign(openair=commond)
-        time.sleep(2)  # 操作一下数据库
-        return commonfun(commond)
+        if Config.get_is_aircon485():
+            aircontroller = AirCondition.AirConditionComputer.AirConditionComputer(logger)
+            result = OperateUtil.operate_hangar("300000")
+            if result == BusinessConstant.SUCCESS:
+                HangarState.set_air_condition_state(BusinessConstant.OPEN_STATE)
+                result = OperateUtil.operate_hangar("940000")
+            return result
+        Config.set_operation_command_info_sign(logger=logger, openair=commond)
+        # time.sleep(2)  # 操作一下数据库
+        # return commonfun(commond)
+        logger.get_log().info(f"[http.openair]页面调用空调打开")
+        return OperateUtil.operate_hangar("300000")
     except Exception as ex:
         logger.get_log().info(f"exception is {ex}")
         return render_template('testpage.html')
@@ -1229,65 +1247,78 @@ def openair():
 def closeair():
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
+        # config = Config()
         commond = params['closeaircomm']
-        if config.get_aircon485():
-            aircontroller = AirCondition.AirConditionComputer.AirConditionOper(airconstate, hangstate, comconfig,
-                                                                               logger)
-            aircontroller.closeAircondition()
-            return "success"
-        config.setcommon_sign(closeair=commond)
-        time.sleep(2)  # 操作一下数据库
-        return commonfun(commond)
+        if Config.get_is_aircon485():
+            aircontroller = AirCondition.AirConditionComputer.AirConditionComputer(logger)
+            result = OperateUtil.operate_hangar("310000")
+            if result == BusinessConstant.SUCCESS:
+                HangarState.set_air_condition_state(BusinessConstant.CLOSE_STATE)
+                result = OperateUtil.operate_hangar("950000")
+            return result
+        Config.set_operation_command_info_sign(logger=logger, closeair=commond)
+        # time.sleep(2)  # 操作一下数据库
+        # return commonfun(commond)
+        logger.get_log().info(f"[http.closeair]页面调用空调关闭")
+        return OperateUtil.operate_hangar("310000")
     except Exception as ex:
         return render_template('testpage.html')
+
 
 @app.route('/setair', methods=['GET', 'POST'])
 def setair():
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
-        coldstoptem=params['coldstoptem']
-        coldsenstem=params['coldsenstem']
-        hotstoptem=params['hotstoptem']
-        hotsenstem=params['hotsenstem']
-        hihum=params['hihum']
-        lowhum=params['lowhum']
-        aircontroller=AirCondition.AirConditionComputer.AirConditionOper(airconstate,hangstate,comconfig,logger)
+        # config = Config()
+        coldstoptem = params['coldstoptem']
+        coldsenstem = params['coldsenstem']
+        hotstoptem = params['hotstoptem']
+        hotsenstem = params['hotsenstem']
+        hihum = params['hihum']
+        lowhum = params['lowhum']
+        aircontroller = AirCondition.AirConditionComputer.AirConditionComputer(logger)
         aircontroller.setColdStopTem(coldstoptem)
         aircontroller.setColdSensitivityTem(coldsenstem)
         aircontroller.setHotStopTem(int(hotstoptem))
         aircontroller.setHotSensitivityTem(hotsenstem)
         aircontroller.setHiHumidityAlarm(hihum)
         aircontroller.setLowHumidityAlarm(lowhum)
-        #存储参数
-        config.set_coldstoptem(coldstoptem)
-        config.set_coldsenstem(coldsenstem)
-        config.set_hotstoptem(hotstoptem)
-        config.set_hotsenstem(hotsenstem)
-        config.set_hihum(hihum)
-        config.set_lowhum(lowhum)
+        # 存储参数
+        Config.set_coldstoptem(coldstoptem)
+        Config.set_coldsenstem(coldsenstem)
+        Config.set_hotstoptem(hotstoptem)
+        Config.set_hotsenstem(hotsenstem)
+        Config.set_hihum(hihum)
+        Config.set_lowhum(lowhum)
         time.sleep(2)  # 操作一下数据库
         return redirect('/testpage')
     except Exception as ex:
         logger.get_log().info(f"exception is {ex}")
         return redirect('/testpage')
 
+
 @app.route('/uavcontroller', methods=['GET', 'POST'])
 def uavcontro():
+    """
+    夜灯控制
+    """
     try:
         params = request.form if request.method == "POST" else request.args
         commond = params['controller']
-        config = Config()
+        # config = Config()
         if commond == "open":
             commond = "400000"
+            logger.get_log().info(f"[http.uavcontroller]页面调用夜灯打开")
+            return OperateUtil.operate_hangar("400000")
             # config.setcommon_sign(openuav=commond)  # 夜灯操作不在更新INI配置
         else:
             commond = "410000"
+            logger.get_log().info(f"[http.uavcontroller]页面调用夜灯关闭")
+            return OperateUtil.operate_hangar("410000")
             # config.setcommon_sign(closeuav=commond)  # 夜灯操作不在更新INI配置
         # print(f"{commond:=<100}")
         # time.sleep(2)  # 操作一下数据库
-        return commonfun(commond)
+        # return commonfun(commond)
     except Exception as ex:
         return render_template('testpage.html')
 
@@ -1295,11 +1326,14 @@ def uavcontro():
 @app.route('/resetbar', methods=['GET', 'POST'])
 def resetbar():
     try:
-        config = Config()
+        # config = Config()
         commond = "500000"
-        return commonfun(commond)
+        # return commonfun(commond)
+        logger.get_log().info(f"[http.resetbar]页面调用推杆复位")
+        return OperateUtil.operate_hangar("500000")
     except Exception as ex:
         return render_template('testpage.html')
+
 
 @app.route('/ABCharge', methods=['GET', 'POST'])
 def ABCharge():
@@ -1308,17 +1342,17 @@ def ABCharge():
         commond = params['wfcommond']
         if commond in ["AStartCharge", "BStartCharge", "AStopCharge", "BStopCharge"]:
             result = ""
-            WFC = M300JCCServerV2(hangstate, wf_state, logger, configini)
-            if commond=="AStartCharge":
+            WFC = JCCServerV2M300Single(logger)
+            if commond == "AStartCharge":
                 WFC.charge_A()
                 return "A充电"
-            elif commond=="BStartCharge":
+            elif commond == "BStartCharge":
                 WFC.charge_B()
                 return "B充电"
-            elif commond=="AStopCharge":
+            elif commond == "AStopCharge":
                 WFC.standby_A()
                 return "A停止充电"
-            elif commond=="BStopCharge":
+            elif commond == "BStopCharge":
                 WFC.standby_B()
                 return "B停止充电"
         else:
@@ -1327,52 +1361,112 @@ def ABCharge():
         logger.get_log().info(f'工控机调用AB充电异常，异常{e}')
         return f"AB充电操作异常，{e}"
 
+
 @app.route('/wfccontroller', methods=['GET', 'POST'])
 def wfccontroller():
+    """
+    页面http操作
+    """
     try:
         params = request.form if request.method == "POST" else request.args
         commond = params['wfcommond']
-        if commond in ["Charge", "TakeOff", "Standby", "DroneOff", "Check", "DisplayOn", "DisplayOff","Connect"]:
+        logger.get_log().info(f"[http页面.wfccontroller]电池操作-开始,接收命令为:{commond}")
+        if commond in ["Charge", "TakeOff", "Standby", "DroneOff", "Check", "DisplayOn", "DisplayOff", "Connect"]:
             result = ""
-            if configini.need_auto_charge:  # 启动自动充电
-                if commond == "Charge":  # 充电操作
-                    result = open_autocharge()
-                    if wf_state.get_battery_value() == "100":
-                        # 满电
-                        result = "full"
-                    elif wf_state.get_state() == "cool":
-                        # 降温
-                        result = "cool"
-                    return result
-                elif commond == "TakeOff":
-                    return takeoff()
-                elif commond == "DroneOff":
-                    return droneoff()
-                elif commond == "Standby":
-                    return standby()
-                else:
-                    return exe_charge_commond(commond)
-            else:  # 非自动充电
-                result = exe_charge_commond(commond)
-                if commond == "Charge":
-                    if wf_state.get_battery_value() == "100":
-                        # 满电
-                        result = "full"
-                    elif wf_state.get_state() == "cool":
-                        # 降温
-                        result = "cool"
-                return result
+            # if Config.get_is_need_auto_charge():  # 启动自动充电
+            if commond == "Charge":  # 充电操作
+                result = OperateUtil.operate_hangar("cp0000")
+                if WFState.get_battery_value() == "100":
+                    # 满电
+                    result = "full"
+                elif WFState.get_battery_state() == "cool":
+                    # 降温
+                    result = "cool"
+            elif commond == "TakeOff":
+                result = OperateUtil.operate_hangar("dt0000")
+            elif commond == "DroneOff":
+                result = OperateUtil.operate_hangar("dd0000")
+            elif commond == "Standby":
+                result = OperateUtil.operate_hangar("sb0000")
+            else:
+                result = OperateUtil.exe_charge_command(commond)
+            logger.get_log().info(f"[http页面.wfccontroller]电池操作-结束,接收命令为:{commond},返回结果为:{result}")
+            return result
         else:
+            logger.get_log().info(f"[http页面.wfccontroller]电池操作-结束,接收命令为:{commond},充电命令错误")
             return "充电操作命令错误"
-    except Exception as e:
-        logger.get_log().info(f'工控机调用充电异常，异常{e}')
+    except Exception as ex:
+        logger.get_log().info(f"[http页面.wfccontroller]电池操作-异常,接收命令为:{commond},异常信息为:{ex}")
         return f"充电异常，{e}"
+
+
+@app.route('/shutterDoor', methods=['GET', 'POST'])
+def shutterDoor():
+    try:
+        params = request.form if request.method == "POST" else request.args
+        commond = params['shutterDoor']
+        # config = Config()
+        if commond == "open":
+            # commond = "400000"
+            # config.setcommon_sign(openuav=commond)  # 夜灯操作不在更新INI配置
+            result = OperateUtil.operate_hangar("920000")
+        else:
+            # commond = "410000"
+            # config.setcommon_sign(closeuav=commond)  # 夜灯操作不在更新INI配置
+            result = OperateUtil.operate_hangar("930000")
+        # print(f"{commond:=<100}")
+        # time.sleep(2)  # 操作一下数据库
+        return result
+    except Exception as ex:
+        return render_template('testpage.html')
+
+
+@app.route('/shandeWindow', methods=['GET', 'POST'])
+def shandeWindow():
+    try:
+        params = request.form if request.method == "POST" else request.args
+        commond = params['shadeWindow']
+        # config = Config()
+        if commond == "open":
+            # commond = "400000"
+            # config.setcommon_sign(openuav=commond)  # 夜灯操作不在更新INI配置
+            result = OperateUtil.operate_hangar("940000")
+        else:
+            # commond = "410000"
+            # config.setcommon_sign(closeuav=commond)  # 夜灯操作不在更新INI配置
+            result = OperateUtil.operate_hangar("950000")
+        # print(f"{commond:=<100}")
+        # time.sleep(2)  # 操作一下数据库
+        return result
+    except Exception as ex:
+        return render_template('testpage.html')
+
+
+@app.route('/updownLift', methods=['GET', 'POST'])
+def updownLift():
+    try:
+        params = request.form if request.method == "POST" else request.args
+        commond = params['updownLift']
+        # config = Config()
+        if commond == "upLift":
+            # commond = "400000"
+            # config.setcommon_sign(openuav=commond)  # 夜灯操作不在更新INI配置
+            result = OperateUtil.operate_hangar("700000")
+        else:
+            # commond = "410000"
+            # config.setcommon_sign(closeuav=commond)  # 夜灯操作不在更新INI配置
+            result = OperateUtil.operate_hangar("710000")
+        # print(f"{commond:=<100}")
+        # time.sleep(2)  # 操作一下数据库
+        return result
+    except Exception as ex:
+        return render_template('testpage.html')
 
 
 @app.route('/testdoortimes', methods=['GET', 'POST'])
 def test_door_times():
     try:
-        test_log=LoggerColl(__name__)
+        test_log = LoggerColl(__name__)
         params = request.form if request.method == "POST" else request.args
         times = params['doortesttimes']  # 测试次数
         distance = params['doorpara']  # 开关门的参数
@@ -1382,22 +1476,20 @@ def test_door_times():
         # error_times_song=0
         current_time = 1
         for i in range(int(times)):
-            strinfo=f"第{current_time}次开门操作"
+            strinfo = f"第{current_time}次开门操作"
             test_log.get_log().info(f"{strinfo:*^50}")
             result = ""
-            if comstate_flag.get_door_isused() == False:  # 串口没有在使用
-                comstate_flag.set_door_used()
-                try:
-                    logger.get_log().info(f'页面调用,机库门操作,{distance}')
-                    statCom_door = JKSATACOM(hangstate, comconfig.get_device_info_door(), comconfig.get_bps_door(),
-                                             comconfig.get_timeout_door(), logger, 0)
-                    jkdoor = JKDoorServer(statCom_door, hangstate, logger)
-                    result = jkdoor.operator_hanger(distance)
-                    comstate_flag.set_door_free()
-                except Exception as doorex:
-                    comstate_flag.set_door_free()
-            else:
-                result = "busy"
+            # if not SerialUsedStateFlag.get_is_used_serial_door():  # 串口没有在使用
+            #     SerialUsedStateFlag.set_used_serial_door()
+            #     try:
+            #         logger.get_log().info(f'页面调用,机库门操作,{distance}')
+            #         OperateUtil.step_scene_door_open_140000(logger)
+            #         SerialUsedStateFlag.set_used_serial_free_door()
+            #     except Exception as doorex:
+            #         SerialUsedStateFlag.set_used_serial_free_door()
+            # else:
+            #     result = "busy"
+            result = OperateUtil.operate_hangar("140000")
 
             if result != "9140":
                 error_times += 1
@@ -1409,19 +1501,17 @@ def test_door_times():
             time.sleep(int(openwait))
             strinfo = f"第{current_time}次关门操作"
             test_log.get_log().info(f"{strinfo:-^50}")
-            if comstate_flag.get_door_isused() == False:  # 串口没有在使用
-                comstate_flag.set_door_used()
-                try:
-                    logger.get_log().info(f'页面调用,机库门操作,150000')
-                    statCom_door = JKSATACOM(hangstate, comconfig.get_device_info_door(), comconfig.get_bps_door(),
-                                             comconfig.get_timeout_door(), logger, 0)
-                    jkdoor = JKDoorServer(statCom_door, hangstate, logger)
-                    result = jkdoor.operator_hanger("150000")
-                    comstate_flag.set_door_free()
-                except Exception as doorex:
-                    comstate_flag.set_door_free()
-            else:
-                result = "busy"
+            # if SerialUsedStateFlag.get_is_used_serial_door() == False:  # 串口没有在使用
+            #     SerialUsedStateFlag.set_used_serial_door()
+            #     try:
+            #         logger.get_log().info(f'页面调用,机库门操作,150000')
+            #         OperateUtil.step_scene_door_close_150000(logger)
+            #         SerialUsedStateFlag.set_used_serial_free_door()
+            #     except Exception as doorex:
+            #         SerialUsedStateFlag.set_used_serial_free_door()
+            # else:
+            #     result = "busy"
+            result = OperateUtil.operate_hangar("150000")
 
             if result != "9150":
                 strinfo = f"第{current_time}次关门操作失败,下位机返回结果为：{result},停止关门操作"
@@ -1430,7 +1520,7 @@ def test_door_times():
             if i == int(times) - 1:
                 break
             time.sleep(int(closewait))
-            current_time=current_time+1
+            current_time = current_time + 1
         strinfo = f"总共需要进行{times}次开门、关门操作，成功了{current_time}次"
         test_log.get_log().info(f"{strinfo:!^50}")
         return testpage()
@@ -1452,7 +1542,7 @@ def test_bar_times():
             strinfo = f"第{current_time}次夹紧操作"
             test_log.get_log().info(f"{strinfo:*^50}")
             # 夹紧
-            result = bar_use_check(distance)
+            result = OperateUtil.operate_hangar("2e10002000")
             if result != "92e0":
                 strinfo = f"第{current_time}次夹紧操作失败,下位机返回结果为：{result},停止夹紧操作"
                 test_log.get_log().info(f"{strinfo:=^50}")
@@ -1460,7 +1550,7 @@ def test_bar_times():
             time.sleep(int(jiajinwait))
             # 松开
             commond = "2f10002000"
-            result = bar_use_check(commond)
+            result = OperateUtil.operate_hangar(commond)
             strinfo = f"第{current_time}次松开推杆操作"
             test_log.get_log().info(f"{strinfo:-^50}")
             if result != "92f0":
@@ -1470,7 +1560,7 @@ def test_bar_times():
             if i == int(times) - 1:
                 break
             time.sleep(int(originwait))
-            current_time=current_time+1
+            current_time = current_time + 1
         strinfo = f"总共需要进行{times}次推杆夹紧和松开操作，成功了{current_time}次"
         test_log.get_log().info(f"{strinfo:%^50}")
         return testpage()
@@ -1494,7 +1584,8 @@ def test_barreset_times():
             strinfo = f"第{current_time}次夹紧操作"
             test_log.get_log().info(f"{strinfo:*^50}")
             commond = distance
-            result = bar_use_check(commond)
+            # result = webclient.bar_use_check(commond)
+            result = OperateUtil.operate_hangar("2e10002000")
             if result != "92e0":
                 strinfo = f"第{current_time}次夹紧操作失败,下位机返回结果为：{result},停止夹紧操作"
                 test_log.get_log().info(f"{strinfo:=^50}")
@@ -1502,7 +1593,8 @@ def test_barreset_times():
             time.sleep(int(resetjiajinwait))
             # 松开
             commond = "500000"
-            result = bar_use_check(commond)
+            # result = webclient.bar_use_check(commond)
+            result = OperateUtil.operate_hangar("500000")
             strinfo = f"第{current_time}次复位推杆操作"
             test_log.get_log().info(f"{strinfo:-^50}")
             if result != "9500":
@@ -1512,7 +1604,7 @@ def test_barreset_times():
             if i == int(times) - 1:
                 break
             time.sleep(int(resetwait))
-            current_time=current_time+1
+            current_time = current_time + 1
         strinfo = f"总共需要进行{times}次推杆夹紧和复位操作，成功了{current_time}次"
         test_log.get_log().info(f"{strinfo:%^50}")
         return testpage()
@@ -1523,7 +1615,7 @@ def test_barreset_times():
 
 
 @app.route('/save', methods=['GET', 'POST'])
-def saveconfig():
+def saveWebsocket():
     '''
     页面信息保存
     :return:
@@ -1531,21 +1623,26 @@ def saveconfig():
     global webclient
     try:
         params = request.form if request.method == "POST" else request.args
-        config = Config()
-        ipaddress = params['server_ip']
-        socket = params['socket']
+        # config = Config()
+        # ipaddress = params['server_ip']
+        # socket = params['socket']
         station_id = params['station_id']
         web_socket_url = params['web_socket_url']
-        config.setconfiginfo(ip=ipaddress, socket=socket, station_id=station_id, web_socket_url=web_socket_url)
-        configinfo_list = config.getconfiginfo()  # 列表元组的形式
-        if configinfo_list is not None and len(configinfo_list) == 1:  # 页面显示信息
-            ipaddress = configinfo_list[0][1]
-            socket = configinfo_list[0][2]
-            station_id = configinfo_list[0][3]
-            if len(configinfo_list[0]) == 5:
-                web_socket_url = configinfo_list[0][4]
-            else:
-                web_socket_url = ''
+        web_socket_heart = params['web_socket_heart']
+        Config.set_websocket_config_info(station_id=station_id, web_socket_url=web_socket_url,
+                                         web_socket_heart=web_socket_heart, logger=logger)
+        configinfo_list = Config.get_websocket_config_info()  # 列表元组的形式
+        station_id = configinfo_list[0][1]
+        web_socket_url = configinfo_list[0][2]
+        web_socket_heart = configinfo_list[0][3]
+        # if configinfo_list is not None and len(configinfo_list) == 1:  # 页面显示信息
+        #     ipaddress = configinfo_list[0][1]
+        #     socket = configinfo_list[0][2]
+        #     station_id = configinfo_list[0][3]
+        #     if len(configinfo_list[0]) == 5:
+        #         web_socket_url = configinfo_list[0][4]
+        #     else:
+        #         web_socket_url = ''
         # 重新启动websocket服务
         if webclient is not None and webclient.server_service == True:  # websocket服务在运行中
             logger.get_log().info("websocket重新启动")
@@ -1555,15 +1652,8 @@ def saveconfig():
             while True:
                 try:
                     if webclient is None or webclient.server_service == False:
-                        webclient = WebSocketUtil(
-                            server_addr='',
-                            hangerstate=hangstate, wf_state=wf_state, logger=logger, comstate_flag=comstate_flag,
-                            configini=configini, auto_charge=auto_charge, comconfig=comconfig)
-                        # webclient = WebSocketUtilV1(
-                        #     server_addr='ws://124.71.225.193:18088/uav/hangarServer/95091e705eceda57',
-                        #     hangerstate=hangstate, wf_state=wf_state, logger=logger,
-                        #     comstate_flag=comstate_flag, configini=configini,
-                        #     comconfig=comconfig)
+                        webclient = WebSocketUtil(server_addr='', logger=logger,
+                                                  auto_charge=auto_charge)
                         webclient.start_service()
                     else:
                         break
@@ -1573,69 +1663,29 @@ def saveconfig():
             logger.get_log().info("webclient设置后已启动，启动webservice")
 
         # if webclient == None or webclient.server_service == False:
-        return render_template('index.html', ipaddress=ipaddress, socket=socket, station_id=station_id,
-                               web_socket_url=web_socket_url)
+        # return render_template('index.html', station_id=station_id, web_socket_url=web_socket_url,web_socket_heart=web_socket_heart)
+        return BusinessConstant.SUCCESS
     except Exception as ex:
-        return render_template('index.html')
+        # return render_template('index.html')
+        return BusinessConstant.ERROR
 
 
-@app.route('/operhanger', methods=['GET', 'POST'])
-def operhanger():
-    '''
-    对外提供机库操作接口
-    外部参数可以通过POST方法传递过来
-    :return:
-    '''
-    params = request.json if request.method == "POST" else request.args
-    # 解析传递过来的参数
-    try:
-        if params != None:  #
-            commond = params['commond']
-            result = ''
-            if commond.startswith("1") or commond.startswith("4"):  # 门的操作
-                if comstate_flag.get_door_isused() == False:  # 串口没有在使用
-                    comstate_flag.set_door_used()
-                    try:
-                        logger.get_log().info(f'http调用,机库门操作,{commond}')
-                        statCom_door = JKSATACOM(hangstate, comconfig.get_device_info_door(), comconfig.get_bps_door(),
-                                                 comconfig.get_timeout_door(), logger, 0)
-                        jkdoor = JKDoorServer(statCom_door, hangstate, logger)
-                        result = jkdoor.operator_hanger(commond)
-                        comstate_flag.set_door_free()
-                        #新增夜灯配置，2023-04-24
-                        if commond.startswith("14") or commond.startswith("15"):
-                            thead_auto = threading.Thread(target=open_close_light, args=(commond,))
-                            thead_auto.start()
+#
+#
+# def open_close_light(commond):
+#     '''
+#     打开或关闭灯光线程
+#     '''
+#     # 打开或关闭灯光线程
+#     if commond.startswith("14"):
+#         # 如果是开门操作，则做开灯操作
+#         lightcontroller = LightController(logger=logger)
+#         lightcontroller.open_light()
+#     elif commond.startswith("15"):
+#         # 如果是关门操作，则做关灯操作
+#         lightcontroller = LightController(logger=logger)
+#         lightcontroller.close_light()
 
-                    except Exception as doorex:
-                        comstate_flag.set_door_free()
-                else:
-                    time.sleep(10)
-                    result = "error"
-            else:
-                result = bar_use_check(commond)
-            if result == "" or result == "busy":
-                result = "error"
-            return result
-        else:
-            return "参数是空"
-    except Exception as e:
-        return "error"
-def open_close_light(commond):
-    '''
-    打开或关闭灯光线程
-    '''
-    #打开或关闭灯光线程
-    if commond.startswith("14"):
-        # 如果是开门操作，则做开灯操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-        lightcontroller.open_light()
-    elif commond.startswith("15"):
-        # 如果是关门操作，则做关灯操作
-        lightcontroller = LightController(comstate_flag=comstate_flag, logger=logger,
-                                          hangerstate=hangstate, comconfig=comconfig)
-        lightcontroller.close_light()
 
 @app.route('/gethangerstate', methods=['GET', 'POST'])
 def gethangerstate():
@@ -1644,8 +1694,8 @@ def gethangerstate():
     :return:
     '''
     try:
-        #print(f"{hangstate.getHangerState()}")
-        return hangstate.getHangerState()
+        # print(f"{hangstate.getHangerState()}")
+        return HangarState.get_hangar_state()
     except Exception as e:
         logger.get_log().info(f'工控机调用机库，异常{e}')
         return "error"
@@ -1658,45 +1708,9 @@ def getchargestate():
     :return:
     '''
     try:
-        return wf_state.getChargeInfo()
+        return WFState.get_charge_info()
     except Exception as e:
         logger.get_log().info(f'触点充电状态调用异常{e}')
-        return "error"
-
-
-@app.route('/opercharge', methods=['GET', 'POST'])
-def oper_charge():
-    '''
-    操作无线充电
-    :return:
-    '''
-    params = request.json if request.method == "POST" else request.args
-    # 解析传递过来的参数
-    try:
-        if params != None:  #
-            commond = params['commond']
-            logger.get_log().info(f'Http请求充电指令，{commond}')
-            if commond in ["Charge", "TakeOff", "Standby", "DroneOff", "Check", "DisplayOn", "DisplayOff","Connect"]:
-                if configini.need_auto_charge:  # 启动自动充电
-                    if commond == "Charge":  # 充电操作
-                        return open_autocharge()
-                    elif commond == "TakeOff":
-                        return takeoff()
-                    elif commond == "DroneOff":
-                        return droneoff()
-                    elif commond == "Standby":
-                        return standby()
-                    else:
-                        return exe_charge_commond(commond)
-                else:  # 非自动充电
-                    result = exe_charge_commond(commond)
-                    return result
-            else:
-                return "充电操作命令错误"
-        else:
-            return "充电操作命令为空"
-    except Exception as e:
-        logger.get_log().info(f'工控机调用充电异常，异常{e}')
         return "error"
 
 
@@ -1707,10 +1721,11 @@ def getWFCstate():
     :return:
     '''
     try:
-        return wf_state.get_state()
+        return WFState.get_battery_state()
     except Exception as e:
         logger.get_log().info(f'充电状态获取异常，{e}')
         return "error"
+
 
 @app.route('/alarmcontroller', methods=['GET', 'POST'])
 def alarmController():
@@ -1722,14 +1737,15 @@ def alarmController():
         params = request.form if request.method == "POST" else request.args
         commond = params['controller']
         print(f"{commond}")
-        alarmControl=AlarmController(hangstate,logger,configini)
-        if commond=="open":
+        alarmControl = AlarmController(logger)
+        if commond == "open":
             alarmControl.start_alarm()
         else:
             alarmControl.stop_alarm()
         return "success"
     except Exception as e:
         return "success"
+
 
 @app.route('/opencontroller', methods=['GET', 'POST'])
 def remoteController():
@@ -1741,172 +1757,139 @@ def remoteController():
         params = request.form if request.method == "POST" else request.args
         commond = params['controller']
         print(f"{commond}")
-        uavControl=UAVController(hangstate,logger,configini,comstate_flag)
-        result="error"
-        if commond=="open":
-            result=uavControl.start_close_controller("open")
+        result = "error"
+        if commond == "open":
+            result = OperateUtil.operate_hangar("h00000")
         else:
-            result=uavControl.start_close_controller("close")
+            result = OperateUtil.operate_hangar("h10000")
         return result
     except Exception as e:
         return "excepiton"
 
-def exe_charge_commond(commond):
-    '''
-    执行充电相关命令
-    :param commond:
-    :return:
-    '''
-    try:
-        result = ""
-        if comstate_flag.get_charge_isused() == False:
-            comstate_flag.set_charge_used()
-            try:
-                if configini.get_charge_version() == "wfc":  # 无线充电
-                    if configini.get_wfc_version() == 'V1.0':  # V1.0版本
-                        WFC = WFCServer(wf_state, logger, configini)
-                        result = WFC.operator_charge(commond)
-                    elif configini.get_wfc_version() == 'V2.0':  # V2.0版本
-                        if configini.wfc_double_connect == False:
-                            WFC = WFCServerV2(wf_state, logger, configini)
-                        else:
-                            WFC = WFCServerV2Sender(wf_state, logger, comconfig)
-                        result = WFC.operator_charge(commond)
-                else:  # 触点充电
-                    if configini.get_wlc_version() == "V1.0":
-                        if configini.wlc_double_connect == True:  # 全双工通信
-                            WFC = M300JCCServerSender(hangstate,wf_state, logger, comconfig)
-                        else:
-                            WFC = M300JCCServer(wf_state, logger, configini)
-                        result = WFC.operator_charge(commond)
-                    elif configini.get_wlc_version() == "V2.0":  # V2.0
-                        WFC = M300JCCServerV2(hangstate,wf_state, logger, configini)
-                        result = WFC.operator_charge(commond)
-                    elif configini.get_wlc_version() == "V3.0":  # V3.0
-                        WFC = M300JCCServerV3(hangstate,wf_state, logger, configini)
-                        result = WFC.operator_charge(commond)
-                    elif configini.get_wlc_version() == "V4.0":  # V4.0
-                        WFC = M300JCCServerV4(hangstate,wf_state, logger, configini)
-                        result = WFC.operator_charge(commond)
-                comstate_flag.set_charge_free()
-            except Exception as charex:
-                comstate_flag.set_charge_free()
-        else:
-            logger.get_log().info(f"http 充电指令{commond}无法执行，因为充电串口被占用")
-            result = "chargeerror"
-        return result
-    except Exception as ex:
-        logger.get_log().info(f"http 充电指令{commond}执行异常")
-        return "chargeerror"
+
+# def exe_charge_commond(commond):
+#     '''
+#     执行充电相关命令
+#     :param commond:
+#     :return:
+#     '''
+#     try:
+#         result = ""
+#         if SerialUsedStateFlag.get_is_used_serial_charge() == False:
+#             SerialUsedStateFlag.set_used_serial_charge()
+#             try:
+#                 if Config.get_charge_version() == "wfc":  # 无线充电
+#                     if Config.get_wfc_version() == 'V1.0':  # V1.0版本
+#                         WFC = WFCServer(logger)
+#                         result = WFC.operator_charge(commond)
+#                     elif Config.get_wfc_version() == 'V2.0':  # V2.0版本
+#                         if Config.get_is_wfc_double_connect() == False:
+#                             WFC = WFCServerV2(logger)
+#                         else:
+#                             WFC = WFCServerV2Sender(logger)
+#                         result = WFC.operator_charge(commond)
+#                 else:  # 触点充电
+#                     if Config.get_wlc_version() == "V1.0":
+#                         if Config.get_is_wlc_double_connect() == True:  # 全双工通信
+#                             WFC = JCCServerM300Sender(logger)
+#                         else:
+#                             WFC = JCCServerM300(logger)
+#                         result = WFC.operator_charge(commond)
+#                     elif Config.get_wlc_version() == "V2.0":  # V2.0
+#                         WFC = JCCServerV2M300Single(logger)
+#                         result = WFC.operator_charge(commond)
+#                     elif Config.get_wlc_version() == "V3.0":  # V3.0
+#                         WFC = JCCServerV3M300(logger)
+#                         result = WFC.operator_charge(commond)
+#                     elif Config.get_wlc_version() == "V4.0":  # V4.0
+#                         WFC = JCCServerV4M350(logger)
+#                         result = WFC.operator_charge(commond)
+#                     elif Config.get_wlc_version() == "V5.0":  # V5.0
+#                         WFC = JCCServerV5(logger)
+#                         result = WFC.operator_charge(commond)
+#                 SerialUsedStateFlag.set_used_serial_free_charge()
+#             except Exception as charex:
+#                 SerialUsedStateFlag.set_used_serial_free_charge()
+#         else:
+#             logger.get_log().info(f"http 充电指令{commond}无法执行，因为充电串口被占用")
+#             result = "chargeerror"
+#         return result
+#     except Exception as ex:
+#         logger.get_log().info(f"http 充电指令{commond}执行异常")
+#         return "chargeerror"
 
 
-def open_autocharge():
-    '''
-    调用自动充电
-    设置自动充电(auto_charge,fly_back)+电量为0+充电
-    :return:
-    '''
-    # 充电操作
-    wf_state.set_battery_value("0")  # 电池状态未知
-    result = "chargeerror"
-    result = exe_charge_commond("Charge")
-    global auto_charge
-    auto_charge.set_run_auto_charge(1)
-    auto_charge.set_fly_back(1)
-    return result
-
-
-def close_autocharge():
-    '''
-    结束自动充电
-    设置自动充电关闭+standby
-    :return:
-    '''
-    global auto_charge
-    auto_charge.set_run_auto_charge(0)
-    auto_charge.set_fly_back(-1)
-    # 复位操作
-    result = "chargeerror"
-    result = exe_charge_commond("Standby")
-    return result
-
-
-def takeoff():
-    '''
-    设置开机
-    close_autocharge()
-    takeoff命令
-    :return:
-    '''
-    close_autocharge()
-    result = "chargeerror"
-    result = exe_charge_commond("TakeOff")
-    return result
-
-
-def droneoff():
-    '''
-    设置关机
-    关机+自动充电
-    :return:
-    '''
-    result = "chargeerror"
-    close_autocharge()
-    # exe_charge_commond("Standby")
-    result = exe_charge_commond("DroneOff")
-    # global auto_charge
-    # wf_state.set_battery_value("0")  # 电池状态未知
-    # auto_charge.set_run_auto_charge(1)
-    # auto_charge.set_fly_back(1)
-    return result
-
-
-def standby():
-    '''
-    设置复位操作
-    结束自动充电+复位
-    :return:
-    '''
-    result = close_autocharge()
-    return result
-
-
-def exe_commond(commond):
-    '''
-    命令执行
-    :param commond:
-    :return:
-    '''
-    # 解析传递过来的参数
-    try:
-        if commond != None:  #
-            result = ''
-            if commond.startswith("1") or commond.startswith("4"):  # 门的操作
-                if comstate_flag.get_door_isused() == False:  # 串口没有在使用
-                    comstate_flag.set_door_used()
-                    try:
-                        logger.get_log().info(f'exe_commond 调用，命令为{commond}')
-                        statCom_door = JKSATACOM(hangstate, comconfig.get_device_info_door(), comconfig.get_bps_door(),
-                                                 comconfig.get_timeout_door(), logger, 0)
-                        jkdoor = JKDoorServer(statCom_door, hangstate, logger)
-                        result = jkdoor.operator_hanger(commond)
-                        comstate_flag.set_door_free()
-                    except Exception as doorex:
-                        comstate_flag.set_door_free()
-                else:
-                    time.sleep(10)
-                    result = "error"
-            else:#推杆的操作
-                result = bar_use_check(commond)
-            if result == "" or result == "busy":
-                result = "error"
-            return result
-        else:
-            return "参数是空"
-    except Exception as e:
-        logger.get_log().info(f'命令调用参数不正确，工控机调用，确认参数{commond}是否正确，{e}')
-        # logger.get_log().info(f'http服务调用参数不正确，工控机调用，确认参数是否正确{e}')
-        return "error"
+# def open_autocharge():
+#     '''
+#     调用自动充电
+#     设置自动充电(auto_charge,fly_back)+电量为0+充电
+#     :return:
+#     '''
+#     # 充电操作
+#     WFState.set_battery_value("0")  # 电池状态未知
+#     result = "chargeerror"
+#     # result = exe_charge_commond("Charge")
+#     result = OperateUtil.step_scene_drone_charge_cp0000(logger)
+#     global auto_charge
+#     auto_charge.set_run_auto_charge(1)
+#     auto_charge.set_fly_back(1)
+#     return result
+#
+#
+# def close_autocharge():
+#     '''
+#     结束自动充电
+#     设置自动充电关闭+standby
+#     :return:
+#     '''
+#     global auto_charge
+#     auto_charge.set_run_auto_charge(0)
+#     auto_charge.set_fly_back(-1)
+#     # 复位操作
+#     result = "chargeerror"
+#     # result = exe_charge_commond("Standby")
+#     result = OperateUtil.step_scene_drone_standby_sb0000(logger)
+#     return result
+#
+#
+# def takeoff():
+#     '''
+#     设置开机
+#     close_autocharge()
+#     takeoff命令
+#     :return:
+#     '''
+#     close_autocharge()
+#     result = "chargeerror"
+#     result = exe_charge_commond("TakeOff")
+#     return result
+#
+#
+# def droneoff():
+#     '''
+#     设置关机
+#     关机+自动充电
+#     :return:
+#     '''
+#     result = "chargeerror"
+#     close_autocharge()
+#     # exe_charge_commond("Standby")
+#     result = exe_charge_commond("DroneOff")
+#     # global auto_charge
+#     # wf_state.set_battery_value("0")  # 电池状态未知
+#     # auto_charge.set_run_auto_charge(1)
+#     auto_charge.set_fly_back(1)
+#     return result
+#
+#
+# def standby():
+#     '''
+#     设置复位操作
+#     结束自动充电+复位
+#     :return:
+#     '''
+#     result = close_autocharge()
+#     return result
 
 
 def reset_machine():
@@ -1914,27 +1897,31 @@ def reset_machine():
     重启服务后复位操作
     :return:
     '''
-    #上电后做一次复位操作
+    # 上电后做一次复位操作
     logger.get_log().info(f'重启做一次复位操作')
-    commmond="500000"
-    result=exe_commond(commmond)
+    commmond = "500000"
+    result = OperateUtil.operate_hangar("500000")
     logger.get_log().info(f'推杆复位执行结果为：{result}')
+    # # 升降台初始化下降
+    # result = webclient.step_scene_down_lift_710000()
+    logger.get_log().info(f'升降台初始化下降结果为：{result}')
+
 
 def start_Aircondition():
     '''
     重启空调
     '''
-    if config.get_aircon485():
-        aircontroller = AirCondition.AirConditionComputer.AirConditionOper(airconstate, hangstate, comconfig,
-                                                                           logger)
-        aircontroller.openAircondition()
-        logger.get_log().info(f"重启上位机操作，重启空调485操作")
+    if Config.get_is_aircon485():
+        aircontroller = AirCondition.AirConditionComputer.AirConditionComputer(logger)
+        result = OperateUtil.operate_hangar("300000")
+        if result == BusinessConstant.SUCCESS:
+            HangarState.set_air_condition_state('open')
+        logger.get_log().info(f"重启上位机操作，重启空调485操作,返回结果为:{result}")
     else:
-        commond_air="300000"
-        result=exe_commond(commond_air)
+        commond_air = "300000"
+        result = OperateUtil.operate_hangar("300000")
         logger.get_log().info(f"重启上位机操作，重启空调{result}")
     time.sleep(5)
-
 
 
 @app.route('/updatesoftware', methods=['GET', 'POST'])
@@ -1947,9 +1934,12 @@ def updatesoftware():
     client.updatesoftware()
     return "success"
 
+
 '''
 [江苏电信定制版]江苏电信接口-获取token
 '''
+
+
 @app.route('/api/v1/getToken', methods=['POST'])
 def jsdx_get_token():
     params = request.json if request.method == "POST" else request.args
@@ -1975,7 +1965,7 @@ def jsdx_get_token():
     # 时间戳验证
     int_in_timestamp = int(in_timestamp)
     logger.get_log().info(f"[jsdx_get_token][in_time][{int_in_timestamp}]")
-    int_now_timestamp = int(time.time())*1000
+    int_now_timestamp = int(time.time()) * 1000
     logger.get_log().info(f"[jsdx_get_token][now_time][{int_now_timestamp}]")
     if math.fabs(int_now_timestamp - int_in_timestamp) > time_abs:
         response['code'] = '0'
@@ -2006,9 +1996,12 @@ def jsdx_get_token():
     logger.get_log().info(f"[jsdx_get_token][token][{token}]")
     return Response(json.dumps(response), mimetype='application/json')
 
+
 '''
 [江苏电信定制版]江苏电信接口-手动控制机库
 '''
+
+
 @app.route('/api/v1/shelter/control', methods=['POST'])
 def jsdx_shelter_control():
     params = request.json if request.method == "POST" else request.args
@@ -2033,7 +2026,7 @@ def jsdx_shelter_control():
         return Response(json.dumps(response), mimetype='application/json')
     try:
         token_time = int(get_aes().decrypt(token))
-        int_now_timestamp = int(time.time())*1000
+        int_now_timestamp = int(time.time()) * 1000
         if math.fabs(int_now_timestamp - token_time) > time_abs:
             response['code'] = '0'
             response['msg'] = 'token过期'
@@ -2055,7 +2048,7 @@ def jsdx_shelter_control():
     global webclient
     if params['opertyp'] == 'open':
         print("open")
-        result = webclient.big_scene_A000()
+        result = OperateUtil.operate_hangar("A000")
         logger.get_log().info(f"[jsdx_shelter_control][open][big_scene_A000][{result}]")
         if result != 'A00090000':
             response['code'] = '0'
@@ -2064,7 +2057,7 @@ def jsdx_shelter_control():
             return Response(json.dumps(response), mimetype='application/json')
     elif params['opertyp'] == 'close':
         print("close")
-        result = webclient.big_scene_B100()
+        result = OperateUtil.operate_hangar("B100")
         logger.get_log().info(f"[jsdx_shelter_control][close][big_scene_B100][{result}]")
         if result != 'B1009000':
             response['code'] = '0'
@@ -2073,7 +2066,7 @@ def jsdx_shelter_control():
             return Response(json.dumps(response), mimetype='application/json')
     elif params['opertyp'] == 'reset':
         print("reset")
-        result = webclient.step_scene_bar_reset_500000()
+        result = OperateUtil.operate_hangar("500000")
         logger.get_log().info(f"[jsdx_shelter_control][reset][step_scene_bar_reset_500000][{result}]")
         if result != '9500':
             response['code'] = '0'
@@ -2094,23 +2087,24 @@ def jsdx_shelter_control():
 
 
 if __name__ == "__main__":
-    #time.sleep(10)  # wait the system until it  is running
+    # time.sleep(10)  # wait the system until it  is running
     #  自动充电线程处理对象必然实例化，线程改为必定执行，但内部逻辑改为判断标识决定是否执行
     logger.get_log().info(f"[AutoChargeControl]===启动自动化充电功能线程===")
-    config = Config()
+    # config = Config()
     # 传入日志对象，按照主任务日志打印
-    config.init_logger(logger)
-    configinfo_list = config.getconfiginfo()  # 列表元组的形式
-    if configinfo_list is not None and len(configinfo_list) == 1:
-        if len(configinfo_list[0]) == 5 and configinfo_list[0][4] != "":  # 天宇的版本,根据是否填写最后一个websocket地址来判定，是不是第三方平台
-            logger.get_log().info(f"[AutoChargeControl][模式0]启动")
-            auto_charge = AutoChargeControl(logger, wf_state, comstate_flag, configini, hangstate)
-        else:
-            logger.get_log().info(f"[AutoChargeControl][模式1-1]启动")
-            auto_charge = AutoChargeControlV1(logger, wf_state, comstate_flag, configini, hangstate)
-    else:
-        logger.get_log().info(f"[AutoChargeControl][模式1-2]启动")
-        auto_charge = AutoChargeControlV1(logger, wf_state, comstate_flag, configini, hangstate)
+    # Config.init_logger(logger)
+    configinfo_list = Config.get_websocket_config_info()  # 列表元组的形式
+    # if configinfo_list is not None and len(configinfo_list) == 1:
+    #     if len(configinfo_list[0]) == 5 and configinfo_list[0][4] != "":  # 天宇的版本,根据是否填写最后一个websocket地址来判定，是不是第三方平台
+    #         logger.get_log().info(f"[AutoChargeControl][模式0]启动")
+    #         auto_charge = AutoChargeControl(logger)
+    #     else:
+    #         logger.get_log().info(f"[AutoChargeControl][模式1-1]启动")
+    #         auto_charge = AutoChargeControlV1(logger)
+    # else:
+    #     logger.get_log().info(f"[AutoChargeControl][模式1-2]启动")
+    #     auto_charge = AutoChargeControlV1(logger)
+    auto_charge = AutoChargeControl(logger)
     thead_auto = threading.Thread(target=auto_charge.start_auto_charge, args=())
     thead_auto.start()
 
@@ -2118,15 +2112,9 @@ if __name__ == "__main__":
     # 启动websocket无限连接和消息接收机制
     while True:
         try:
-            if webclient == None or webclient.server_service == False:
+            if webclient is None or webclient.server_service is False:
                 webclient = WebSocketUtil(server_addr='ws://124.71.225.193:18088/uav/hangarServer/95091e705eceda57',
-                                          hangerstate=hangstate, wf_state=wf_state, logger=logger,
-                                          comstate_flag=comstate_flag, configini=configini, auto_charge=auto_charge,
-                                          comconfig=comconfig)
-                # webclient = WebSocketUtilV1(server_addr='ws://124.71.225.193:18088/uav/hangarServer/95091e705eceda57',
-                #                             hangerstate=hangstate, wf_state=wf_state, logger=logger,
-                #                             comstate_flag=comstate_flag, configini=configini,
-                #                             comconfig=comconfig)
+                                          logger=logger, auto_charge=auto_charge)
 
                 webclient.start_service()
 
@@ -2137,102 +2125,103 @@ if __name__ == "__main__":
             continue
     logger.get_log().info("webclient已启动，启动webservice")
 
-    #--------------推杆复位---------------------
+    # --------------推杆复位---------------------
 
-    logger.get_log().info("启动推杆复位")
-    reset_machine()
+    # logger.get_log().info("启动推杆复位")
+    # reset_machine()
 
     # 如果启用了空调485通信，则使用监听获取空调状态2023-04-04
-    if configini.get_aircon485()==True:
-        checkAirConState=CheckAirConState(hangstate.get_airstate(),hangstate,comconfig,logger)
+    if Config.get_is_aircon485() is True:
+        checkAirConState = CheckAirConState(logger)
         checkAirConState.checkAirState()
-    if configini.get_useweather() == True:
-        if configini.get_weather_485() == True:  # 485读取数据
-            # 启动天气情况获取
-            weatherclient = None
+    if Config.get_is_use_weather() is True:
+        if Config.get_is_weather_485() is True:  # 485读取数据
             # 启动一个线程获取天气情况
             logger.get_log().info(f"启动485天气")
-            weatherclient = WeatherInfo485(hangstate, logger, comstate_flag,configini)
-            thead_wather = threading.Thread(target=weatherclient.start_get_weather, args=())
-            thead_wather.start()
+            weather_info = WeatherInfo485(logger)
+            thead_weather = threading.Thread(target=weather_info.start_get_weather, args=())
+            thead_weather.start()
         else:
-            # 启动天气情况获取
-            weatherclient = None
             # 启动一个线程获取天气情况
-            weatherclient = WeatherInfo(hangstate, logger, comstate_flag, configini)
-            thead_wather = threading.Thread(target=weatherclient.startgetinfo, args=())
-            thead_wather.start()
+            weather_info = WeatherInfo(logger)
+            thead_weather = threading.Thread(target=weather_info.startgetinfo, args=())
+            thead_weather.start()
 
-    if configini.get_GPS() == True:
+    if Config.get_is_gps():
         # 添加PGS信息
         gps_client = None
         # 启动一个线程获取天气情况
-        gps_client = GPSInfo(hangstate, logger, comconfig)
-        if(configini.get_gps_type()=="1"):
+        gps_client = GPSInfo(logger)
+        if Config.get_gps_type() == "1":
             thead_gps = threading.Thread(target=gps_client.start_get_gps, args=())
             thead_gps.start()
-        elif(configini.get_gps_type()=="2"):
+        elif Config.get_gps_type() == "2":
             thead_gps = threading.Thread(target=gps_client.start_get_gps_RTK, args=())
             thead_gps.start()
     # 如果触点充电，启用一个线程,不停的check电池状态
-    if configini.get_charge_version() == "wlc":
-        if configini.get_wlc_version() == "V1.0":
+    if Config.get_charge_version() == "wlc":
+        if Config.get_wlc_version() == "V1.0":
             charge_client = None
-            charge_client = CheckState(hangstate,logger, wf_state, comstate_flag, configini, comconfig)
+            charge_client = CheckState(logger)
             thead_charge = threading.Thread(target=charge_client.start_check, args=())
             thead_charge.start()
-            if configini.wlc_double_connect == True:
+            if Config.get_is_wlc_double_connect():
                 charge_listern = None
-                charge_listern = JCCListerner(logger, wf_state, comconfig)
+                charge_listern = JCCListerner(logger)
                 thead_charge_listern = threading.Thread(target=charge_listern.start_Listern, args=())
                 thead_charge_listern.start()
         else:  # V2.0 or V3.0
             charge_client = None
-            charge_client = CheckState(hangstate,logger, wf_state, comstate_flag, configini, comconfig)
+            charge_client = CheckState(logger)
             thead_charge = threading.Thread(target=charge_client.start_check, args=())
             thead_charge.start()
         # 如果无线充电，启用一个线程,不停的check电池状态，如果是无线充电1.0版本则不进行操作（保持现在的状态），如果是无线充电2.0版本则进行充电操作(默认开启2.0版本)
-    elif configini.get_charge_version() == "wfc" and configini.get_wfc_version() == "V2.0" and configini.wfc_double_connect == True:
-        # 无线充电不再check状态
-        # charge_wfc_client = None
-        # charge_wfc_client = CheckStateWFCV2(logger, wf_state, comstate_flag,configini, comconfig)
-        # thead_wfc_charge = threading.Thread(target=charge_wfc_client.start_check, args=())
-        # thead_wfc_charge.start()
+    elif Config.get_charge_version() == "wfc" and Config.get_wfc_version() == "V2.0" and Config.get_is_wfc_double_connect() is True:
         # 启动监听
         charge_wfc_listerner = None
-        charge_wfc_listerner = WFCV2Listerner(logger, wf_state, comconfig)
+        charge_wfc_listerner = WFCV2Listerner(logger)
         thead_wfc_charge_listerner = threading.Thread(target=charge_wfc_listerner.start_Listern, args=())
         thead_wfc_charge_listerner.start()
 
     # 启动MQTT接口对接（为兼容旧版本，一般注释掉）
-    # if BASEUtile.InitFileTool.get_boolean_value("mqtt_info", "is_run_mqtt"):
-    #     mqtt_type = BASEUtile.InitFileTool.get_str_value("mqtt_info", "mqtt_type")
-    #     if mqtt_type == "dianxin":
-    #         logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[电信定制版]")
-    #         start_mqtt_thread_dx(webclient, hangstate)
-    #     elif mqtt_type == "jiangsudx":
-    #         logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[江苏电信定制版]")
-    #         start_mqtt_thread_jiangsudx(webclient, hangstate)
-    #     elif mqtt_type == "hubeidianli":
-    #         logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[湖北电力定制版]")
-    #         start_mqtt_thread_hubeidianli(webclient, hangstate)
-    #     elif mqtt_type == "nanfangdianwang":
-    #         logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[南方电网定制版]")
-    #         start_mqtt_thread_nanfangdianwang(webclient, hangstate)
-    #     else:
-    #         logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[自有协议]")
-    #         # TODO 自有MQTT功能入口
-    # else:
-    #     logger.get_log().info("[MQTT]禁用MQTT服务，无需启动")
+    if BASEUtile.InitFileTool.get_boolean_value("mqtt_info", "is_run_mqtt"):
+        mqtt_type = BASEUtile.InitFileTool.get_str_value("mqtt_info", "mqtt_type")
+        if mqtt_type == "dianxin":
+            logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[电信定制版]")
+            start_mqtt_thread_dx(webclient, logger)
+        elif mqtt_type == "jiangsudx":
+            logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[江苏电信定制版]")
+            start_mqtt_thread_jiangsudx(webclient, logger)
+        elif mqtt_type == "hubeidianli":
+            logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[湖北电力定制版]")
+            start_mqtt_thread_hubeidianli(webclient, logger)
+        elif mqtt_type == "nanfangdianwang":
+            logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[南方电网定制版]")
+            start_mqtt_thread_nanfangdianwang(webclient, logger)
+        else:
+            logger.get_log().info("[MQTT]启用MQTT服务，启动MQTT服务[自有协议]")
+            # TODO 自有MQTT功能入口
+    else:
+        logger.get_log().info("[MQTT]禁用MQTT服务，无需启动")
 
-    logger.get_log().info("-----服务启动，空调打开------")
-    start_Aircondition()
+    # logger.get_log().info("-----服务启动，空调打开------")
+    # start_Aircondition()
+
+    # 初始化配件状态,需要从配置文件中读取
+    initHangar = InitHangarState(logger)
+    initHangar.init_hangar()
 
     # #启动夜间自动充电配置
-    chargeAtTime=ChargeAtTime(configini,comstate_flag,wf_state,logger,hangstate,comconfig)
-    #启动一个线程执行
-    nigth_charge_thread=threading.Thread(target=chargeAtTime.start_task_thread, args=())
+    chargeAtTime = ChargeAtTime(logger)
+    # 启动一个线程执行夜间充电
+    nigth_charge_thread = threading.Thread(target=chargeAtTime.start_task_thread, args=())
     nigth_charge_thread.start()
+    # 警示灯打开线程
+    if Config.get_is_alarm_light() is True:
+        logger.get_log().info(f"[机库启动]警示灯配置文件alarm:{Config.get_is_alarm_light()},警示绿灯线程开启")
+        threading.Thread(target=AlarmLightController.open_light_thread, args=()).start()
+    else:
+        logger.get_log().info(f"[机库启动]警示灯配置文件alarm:{Config.get_is_alarm_light()},警示绿灯线程无需开启")
 
     logger.get_log().info("服务开启，完成")
     app.run(host='0.0.0.0', port=8000)

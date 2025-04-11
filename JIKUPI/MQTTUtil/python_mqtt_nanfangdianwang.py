@@ -11,14 +11,17 @@ from threading import Thread
 from paho.mqtt import client as mqtt_client
 
 import BASEUtile.InitFileTool
-from BASEUtile import HangerState
+import BASEUtile.OperateUtil as OperateUtil
+import BASEUtile.HangarState as HangarState
 from BASEUtile.logger import Logger
+from ServerManager.websockets import WebSocketUtil
 
-logger = Logger(__name__)  # 日志记录
+# logger = Logger(__name__)  # 日志记录
+
 '''
 南方电网专有接口部分
 '''
-ini_serialNumber = BASEUtile.InitFileTool.get_str_value("nanfangdianwang_info", "nest_id")
+ini_serialNumber = BASEUtile.InitFileTool.get_str_value("mqtt_info", "serial_number")
 
 # 操控系统下发命令主题(通配表达式#会多捕获自己的应答，所以采用元组方式)
 topic_subscribe_list = [
@@ -35,8 +38,9 @@ topic_subscribe_list = [
 client_id = 'jiku-001'  # 客户端id 后续读取配置文件覆盖
 
 client_publish = None  # 用于推送消息的客户端
-webclient = None  # websocket推送线程
-hangstate = None  # 机库状态信息
+webclient: WebSocketUtil = None  # websocket推送线程
+# hangstate = None  # 机库状态信息
+logger = None  # 日志对象
 
 '''
 关于qos设置，考虑我们场景，应该统一为2
@@ -83,6 +87,7 @@ def connect_mqtt() -> mqtt_client:
             client = mqtt_client.Client(client_id)
             client.on_connect = on_connect
             client.on_connect_fail = on_connect_fail
+            client.reconnect_delay_set(min_delay=10, max_delay=120)
             # client.username_pw_set("admin", "password")
             client.username_pw_set(username, password)  # 账户密码
             # broker = 'broker.emqx.io'
@@ -141,14 +146,14 @@ def subscribe(client: mqtt_client):
 
 
 def publish(topic_publish, message):
-    logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
+    # logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
     global client_publish
-    if client_publish is None:
-        time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
-    logger.get_log().info(f"[MQTT][publish]执行下发消息:{message}")
-    result = client_publish.publish(topic_publish, message, qos=2)
-    status = result[0]
-    logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
+    if client_publish is not None:
+        # time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
+        logger.get_log().info(f"[MQTT][publish]执行下发消息,主题：{topic_publish},消息:{message}")
+        result = client_publish.publish(topic_publish, message, qos=0)
+        status = result[0]
+        logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
 
 
 def publish_debug_log(topic_publish, message):
@@ -157,7 +162,7 @@ def publish_debug_log(topic_publish, message):
     if client_publish is None:
         time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
     logger.get_log().debug(f"[MQTT][publish]执行下发消息:{message}")
-    result = client_publish.publish(topic_publish, message, qos=2)
+    result = client_publish.publish(topic_publish, message, qos=0)
     status = result[0]
     logger.get_log().debug(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
 
@@ -185,21 +190,23 @@ def run_status_base():
             time.sleep(10)  # 异常后晚10秒启动推送，给MQTT链接创造时间
 
 
-def start_mqtt_thread_nanfangdianwang(web_client, hang_state):
-    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
+def start_mqtt_thread_nanfangdianwang(web_client, logger_in):
+    global logger
+    logger = logger_in
     global webclient
     webclient = web_client
-    global hangstate
-    hangstate = hang_state
+    # global hangstate
+    # hangstate = hang_state
+    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
     # print(f"hangstate.getHangerState={hangstate.getHangerState()}")
     # print(f"hangstate.get_state_dict()={hangstate.get_state_dict()}")
     thread = Thread(target=run, args=([]), daemon=True)
     thread.start()
     logger.get_log().info("[MQTT] 启动 MQTT 主接收发送任务线程 [完成]")
 
-    thread_status_base = Thread(target=run_status_base, args=([]), daemon=True)
-    thread_status_base.start()
-    logger.get_log().info("[MQTT] 启动 [/status/base]定时推送机库注册信息线程 [完成]")
+    # thread_status_base = Thread(target=run_status_base, args=([]), daemon=True)
+    # thread_status_base.start()
+    # logger.get_log().info("[MQTT] 启动 [/status/base]定时推送机库注册信息线程 [完成]")
 
     logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [结束]")
 
@@ -286,28 +293,28 @@ def do_sys_motor(msg_topic, message):
         result_message["pCode"] = code  # pCode为之前传入的code
         logger.get_log().info(f"[MQTT]执行[/sys/motor_{code}][开始]")
         if code == "15001":  # 15001: 舱门控制-打开
-            result = webclient.step_scene_door_open_140000()
+            result = OperateUtil.operate_hangar("140000")
             # result = "9140"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/motor_{code}][打开舱门][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):
                 result_message["code"] = 4000
                 result_message["msg"] = result
         elif code == "15002":  # 15002: 舱门控制-关门
-            result = webclient.step_scene_door_close_150000()
+            result = OperateUtil.operate_hangar("150000")
             # result = "9150"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/motor_{code}][关闭舱门][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):
                 result_message["code"] = 4000
                 result_message["msg"] = result
         elif code == "15011":  # 15011: 归中机构控制-夹紧
-            result = webclient.step_scene_bar_close_2e10002000()
+            result = OperateUtil.operate_hangar("2e10002000")
             # result = "92e0"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/motor_{code}][夹紧推杆][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):
                 result_message["code"] = 4000
                 result_message["msg"] = result
         elif code == "15012":  # 15012: 归中机构控制-松开
-            result = webclient.step_scene_bar_reset_500000()
+            result = OperateUtil.operate_hangar("500000")
             # result = "9500"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/motor_{code}][松开推杆][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):
@@ -356,28 +363,28 @@ def do_sys_power(msg_topic, message):
         result_message["pCode"] = code  # pCode为之前传入的code
         logger.get_log().info(f"[MQTT]执行[/sys/power_{code}][开始]")
         if code == "17012":  # 17012: 无人机-开机
-            result = webclient.step_scene_drone_takeoff_dt0000()
+            result = OperateUtil.operate_hangar("dt0000")
             # result = "9dt0"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/power_{code}][无人机开机][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):
                 result_message["code"] = 4000
                 result_message["msg"] = result
         elif code == "17013":  # 17013: 无人机-关机
-            result = webclient.step_scene_drone_off_dd0000()
+            result = OperateUtil.operate_hangar("dd0000")
             # result = "9dd0"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/power_{code}][无人机关机][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):
                 result_message["code"] = 4000
                 result_message["msg"] = result
         elif code == "17007":  # 17007: 无人机-充电
-            result = webclient.step_scene_drone_charge_cp0000()
+            result = OperateUtil.operate_hangar("cp0000")
             # result = "9cp0"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/power_{code}][无人机充电][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):
                 result_message["code"] = 4000
                 result_message["msg"] = result
         elif code == "17008":  # 17008: 无人机-待机(停止充电)
-            result = webclient.step_scene_drone_standby_sb0000()
+            result = OperateUtil.operate_hangar("sb0000")
             # result = "9sb0"  # TODO 正式版本注释 放开正式操作
             logger.get_log().info(f"[MQTT]执行[/sys/power_{code}][无人机待机][结束]底层下位机接口应答结果[{result}]")
             if not result.endswith("0"):

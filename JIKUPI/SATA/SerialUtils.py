@@ -5,18 +5,18 @@
 
 import serial
 import binascii
-
+import USBDevice.USBDeviceConfig as USBDeviceConfig
 
 class SerialUtils(object):
-    def __init__(self,comconfig,thresholdValue=64):
-        self.comconfig=comconfig
+    def __init__(self,thresholdValue=64):
+        # self.comconfig=comconfig
         self.l_serial = None
         self.alive = False
-        self.port = self.comconfig.get_device_info_charge()
-        self.baudrate = self.comconfig.get_bps_charge()
-        self.bytesize = self.comconfig.get_charge_bytesize_charge()
-        self.parity = self.comconfig.get_charge_parity()
-        self.stopbits = self.comconfig.get_charge_stopbits()
+        self.port = USBDeviceConfig.get_serial_usb_charge()
+        self.baudrate = USBDeviceConfig.get_serial_bps_charge()
+        self.bytesize = USBDeviceConfig.get_serial_bytesize_charge()
+        self.parity = USBDeviceConfig.get_serial_parity_charge()
+        self.stopbits = USBDeviceConfig.get_serial_stopbits_charge()
         self.thresholdValue = thresholdValue #接收至少多少个字符才算接收到信息
         self.receive_data = ""
         self.value=""

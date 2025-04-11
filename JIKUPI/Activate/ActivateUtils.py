@@ -9,13 +9,13 @@ import hashlib
 # import fcntl#只有linux下才可以使用
 import socket, struct
 
-from ConfigIni import ConfigIni
-
+# from ConfigIni import ConfigIni
+import BASEUtile.Config as Config
 
 class ActivateUtils(object):
-    def __init__(self, config, log):
+    def __init__(self, log):
         self.maccode = ""
-        self.config = config
+        self.config = Config
         self.log = log
 
     def getMacCode(self):
@@ -179,7 +179,8 @@ class ActivateUtils(object):
         return str(unique_id)
 
 if __name__ == "__main__":
-    configini=ConfigIni()
-    activate = ActivateUtils(configini, None)
-    print(activate.get_pass_date())
-    print(activate.get_unique_identifier())
+    # configini=ConfigIni()
+    # activate = ActivateUtils(configini, None)
+    # print(activate.get_pass_date())
+    # print(activate.get_unique_identifier())
+    pass

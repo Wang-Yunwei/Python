@@ -2,7 +2,7 @@ import configparser
 
 config = configparser.ConfigParser()  # 实例化
 
-#path = r"D:/WKZNSVNAPP112/JIKUPI/JIKUPI/jiku_config.ini"  # 自己测试ini文件路径
+# path = r"E:/zyhk/shangweiji/jikuapi/common/luxd/JIKUPI/jiku_config.ini"  # 自己测试ini文件路径
 path = r"/home/wkzn/JIKUPI/jiku_config.ini"  # 正式版本ini文件路径
 # path = r"E:\python_jk_mqtt\JIKUPI\jiku_config.ini"  # pang.hy测试ini文件路径
 config.read(path, encoding="utf-8-sig")

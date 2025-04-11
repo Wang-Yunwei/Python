@@ -40,6 +40,16 @@
           <div class="label label-primary">遥控器：<span>{{hanger_uav}}</span></div>
         </div>
       </div>
+      <div class=".col-xs-6 .col-sm-3">
+        <div id="uavcontrollershow" class="label-item">
+          <div class="label label-primary">升降台：<span>{{hanger_updown_lift}}</span></div>
+        </div>
+      </div>
+      <div class=".col-xs-6 .col-sm-3">
+        <div id="uavcontrollershow" class="label-item">
+          <div class="label label-primary">旋转台：<span>{{hanger_turn_lift}}</span></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -92,43 +102,6 @@
       </form>
     </div>
 
-    <div id="airconoper" class="group">
-      <div class="h5">空调操作</div>
-      <form action="/setair" method="post" class="disFlex">
-        <div class="left">
-          <div class="leftItem border-bottom border-primary border-dashed" >
-            <label>设置空调制冷停止温度（15-50）</label>
-            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="coldstoptem" name="coldstoptem" value="{{coldstoptem}}">
-          </div>
-
-          <div class="leftItem border-bottom border-primary border-dashed">
-            <label>设置空调制冷灵敏度（1-20）</label>
-            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="coldsenstem" name="coldsenstem" value="{{coldsenstem}}">
-          </div>
-          <div class="leftItem border-bottom border-primary border-dashed" >
-            <label>设置空调加热停止温度（小于制冷停止温度）</label>
-            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="hotstoptem" name="hotstoptem" value="{{hotstoptem}}">
-          </div>
-          <div class="leftItem border-bottom border-primary border-dashed">
-            <label>设置空调加热灵敏度（1-20）</label>
-            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="hotsenstem" name="hotsenstem" value="{{hotsenstem}}">
-          </div>
-          <div class="leftItem border-bottom border-primary border-dashed" >
-            <label>设置空调高湿湿度（60-100）</label>
-            <input type="text" class="form-control" placeholder="空调高湿湿度" id="hihum" name="hihum" value="{{hihum}}">
-          </div>
-          <div class="leftItem ">
-            <label>设置空调低湿湿度（10-50）</label>
-            <input type="text" class="form-control" placeholder="空调低湿湿度" id="lowhum" name="lowhum" value="{{lowhum}}">
-          </div>
-
-        </div>
-
-
-        <button type="submit" class="btn btn-primary">设置空调参数</button>
-      </form>
-    </div>
-
     <div id="uavcontroller" class="group">
       <div class="h5">探照灯操作</div>
       <form action="/uavcontroller" method="post" class="flex">
@@ -140,6 +113,56 @@
           <label>探照灯关闭</label>
           <button type="submit" class="btn btn-primary" value="close" id="closecontroller" name="controller">关闭探照灯</button>
         </div>
+      </form>
+    </div>
+{#    <div id="shutterDoor" class="group">#}
+{#      <div class="h5">天窗操作</div>#}
+{#      <form action="/shutterDoor" method="post" class="flex">#}
+{#        <div class="formItem">#}
+{#          <label>天窗打开</label>#}
+{#          <button type="submit" class="btn btn-primary" value="open" id="openShutterDoor" name="shutterDoor">天窗打开</button>#}
+{#        </div>#}
+{#        <div class="formItem">#}
+{#          <label>天窗关闭</label>#}
+{#          <button type="submit" class="btn btn-primary" value="close" id="closeShutterDoor" name="shutterDoor">天窗关闭</button>#}
+{#        </div>#}
+{#      </form>#}
+{#    </div>#}
+{#    <div id="shadeWindow" class="group">#}
+{#      <div class="h5">百叶窗操作</div>#}
+{#      <form action="/shandeWindow" method="post" class="flex">#}
+{#        <div class="formItem">#}
+{#          <label>百叶窗打开</label>#}
+{#          <button type="submit" class="btn btn-primary" value="open" id="openShadeWindow" name="shadeWindow">百叶窗打开</button>#}
+{#        </div>#}
+{#        <div class="formItem">#}
+{#          <label>百叶窗关闭</label>#}
+{#          <button type="submit" class="btn btn-primary" value="close" id="closeShandeWindow" name="shadeWindow">百叶窗关闭</button>#}
+{#        </div>#}
+{#      </form>#}
+{#    </div>#}
+    <div id="updownLift" class="group">
+      <div class="h5">升降台操作</div>
+      <form action="/updownLift" method="post" class="flex">
+        <div class="formItem">
+          <label>升降台上升</label>
+          <button type="submit" class="btn btn-primary" value="upLift" id="upLift" name="updownLift">升降台上升</button>
+        </div>
+        <div class="formItem">
+          <label>升降台下降</label>
+          <button type="submit" class="btn btn-primary" value="downLift" id="downLift" name="updownLift">升降台下降</button>
+        </div>
+      </form>
+    </div>
+    <div id="turnLift" class="group">
+      <div class="h5">旋转台操作</div>
+      <form action="/turnLift" method="post">
+        <label>旋转台旋转</label>
+        <input type="text" class="form-control" placeholder="旋转命令" id="turnliftcomm" name="turnliftcomm" value="{{turn_lift}}"> <button type="submit" class="btn btn-primary">旋转</button>
+      </form>
+      <form action="/backLift" method="post">
+        <label>旋转台回位</label>
+        <input type="text" class="form-control" placeholder="回位命令" id="backliftcomm" name="backliftcomm" value="{{back_lift}}"> <button type="submit" class="btn btn-primary">回位</button>
       </form>
     </div>
     <div id="wfccontroller" class="group">
@@ -160,19 +183,19 @@
         <label>充电</label>
         <input type="text" class="form-control" placeholder="充电" id="charge" name="wfcommond" value="Charge"><button type="submit" class="btn btn-primary">充电</button>
       </form>
-       <form action="/wfccontroller" method="post">
+       <form action="/wfccontroller" method="post" style="display: none;">
         <label>Check</label>
         <input type="text" class="form-control" placeholder="Check" id="check" name="wfcommond" value="Check"><button type="submit" class="btn btn-primary">Check</button>
       </form>
-       <form action="/wfccontroller" method="post">
+       <form action="/wfccontroller" method="post" style="display: none;">
         <label>DisplayOn</label>
         <input type="text" class="form-control" placeholder="Check" id="DisplayOn" name="wfcommond" value="DisplayOn"><button type="submit" class="btn btn-primary">DisplayOn</button>
       </form>
-       <form action="/wfccontroller" method="post">
+       <form action="/wfccontroller" method="post" style="display: none;">
         <label>DisplayOff</label>
         <input type="text" class="form-control" placeholder="Check" id="DisplayOff" name="wfcommond" value="DisplayOff"><button type="submit" class="btn btn-primary">DisplayOff</button>
       </form>
-      <form action="/wfccontroller" method="post">
+      <form action="/wfccontroller" method="post" style="display: none;">
         <label>Connect</label>
         <input type="text" class="form-control" placeholder="Check" id="Connect" name="wfcommond" value="Connect"><button type="submit" class="btn btn-primary">Connnect</button>
       </form>
@@ -235,7 +258,44 @@
       </form>
     </div>
 
-    <div class="group">
+    <div id="airconoper" class="group">
+      <div class="h5">空调操作</div>
+      <form action="/setair" method="post" class="disFlex">
+        <div class="left">
+          <div class="leftItem border-bottom border-primary border-dashed" >
+            <label>设置空调制冷停止温度（15-50）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="coldstoptem" name="coldstoptem" value="{{coldstoptem}}">
+          </div>
+
+          <div class="leftItem border-bottom border-primary border-dashed">
+            <label>设置空调制冷灵敏度（1-20）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="coldsenstem" name="coldsenstem" value="{{coldsenstem}}">
+          </div>
+          <div class="leftItem border-bottom border-primary border-dashed" >
+            <label>设置空调加热停止温度（小于制冷停止温度）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="hotstoptem" name="hotstoptem" value="{{hotstoptem}}">
+          </div>
+          <div class="leftItem border-bottom border-primary border-dashed">
+            <label>设置空调加热灵敏度（1-20）</label>
+            <input type="text" class="form-control" placeholder="空调制冷停止温度" id="hotsenstem" name="hotsenstem" value="{{hotsenstem}}">
+          </div>
+          <div class="leftItem border-bottom border-primary border-dashed" >
+            <label>设置空调高湿湿度（60-100）</label>
+            <input type="text" class="form-control" placeholder="空调高湿湿度" id="hihum" name="hihum" value="{{hihum}}">
+          </div>
+          <div class="leftItem ">
+            <label>设置空调低湿湿度（10-50）</label>
+            <input type="text" class="form-control" placeholder="空调低湿湿度" id="lowhum" name="lowhum" value="{{lowhum}}">
+          </div>
+
+        </div>
+
+
+        <button type="submit" class="btn btn-primary">设置空调参数</button>
+      </form>
+    </div>
+
+    <div class="group" style="display: none;">
       <div class="h5">机库开关门测试</div>
       <form action="/testdoortimes" method="post" class="disFlex">
         <div class="left">
@@ -260,7 +320,7 @@
       </form>
     </div>
 
-    <div class="group">
+    <div class="group" style="display: none;">
       <div class="h5">机库推拉杆测试</div>
       <form action="/testbartimes" method="post" class="disFlex">
         <div class="left">
@@ -285,7 +345,7 @@
       </form>
     </div>
 
-    <div class="group">
+    <div class="group" style="display: none;">
       <div class="h5">机库推拉杆复位测试</div>
       <form action="/testbarresettimes" method="post" class="disFlex">
         <div class="left">
@@ -325,7 +385,7 @@
         </form>
       </div>
 
-       <div class="group">
+       <div class="group" style="display: none;">
         <div class="h5">升级上位机程序</div>
         <form action="/updatesoftware" method="post" class="disFlex">
           <button type="submit" class="btn btn-primary">升级上位机程序</button>

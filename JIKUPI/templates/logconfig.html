@@ -39,6 +39,15 @@
         <div class="h4">MINIO服务端桶名称</div>
         <input type="text" class="form-control" placeholder="MINIO服务端桶名称" id="minio_dir" name="minio_dir" value="{{minio_dir}}">
       </div>
+      <div class="input-group mb-3">
+        <div class="h4">上传日志接口地址(暂时仅室内平台)</div>
+        <input type="text" class="form-control" placeholder="平台上传日志接口" id="minio_dir" name="upload_log_url" value="{{upload_log_url}}">
+      </div>
+
+{#      <div class="input-group mb-3">#}
+{#        <div class="h4">日志自定义后缀名</div>#}
+{#        <input type="text" class="form-control" placeholder="日志自定义后缀名" id="minio_suffix" name="minio_suffix" value="{{minio_suffix}}">#}
+{#      </div>#}
 
       <div style="text-align:center">
         <button type="submit" class="btn btn-primary">保存日志文件配置</button>

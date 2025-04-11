@@ -2,22 +2,25 @@
 # @Time : 2022/1/5 22:41 
 # @Author : ZKL 
 # @File : WFCServer.py
-#机库无线充电服务端
+# 机库无线充电服务端
 import threading
 import time
 
 from SATA.SATACom import Communication
 from SATA.SerialUtils import SerialUtils
-from WFCharge.WFState import WFState
+import WFCharge.WFState as WFState
 from BASEUtile.logger import Logger
-class WFCServerV2Sender():#定义无线充电服务端
-    def __init__(self,wf_state,logger,comconfig):
-        self.state = wf_state  # 无线充电当前状态信息
-        self.logger = logger
-        self.comconfig=comconfig
-        self.engine=SerialUtils(self.comconfig,thresholdValue=2)
+import USBDevice.USBDeviceConfig as USBDeviceConfig
 
-    def operator_charge(self,commond):
+
+class WFCServerV2Sender:  # 定义无线充电服务端
+    def __init__(self, logger):
+        # self.state = wf_state  # 无线充电当前状态信息
+        self.logger = logger
+        # self.comconfig = comconfig
+        self.engine = SerialUtils(thresholdValue=2)
+
+    def operator_charge(self, commond):
         """
         充电操作
         :param commond:
@@ -50,17 +53,17 @@ class WFCServerV2Sender():#定义无线充电服务端
         """
         try:
             result = "chargeerror"
-            waittime=57
+            waittime = 57
             times = 0
             # 发送命令
             self.logger.get_log().info(f"发送充电命令--Charge")
             self.engine.start()
             self.engine.write("Charge".encode('ascii'), isHex=False)
             self.engine.stop()
-            while times<waittime:
+            while times < waittime:
                 time.sleep(1)  # 等待25秒
                 times += 1
-                if self.state.get_state()=="charging":
+                if WFState.get_battery_state() == "charging":
                     return "success"
             return result
         except Exception as e:
@@ -84,7 +87,7 @@ class WFCServerV2Sender():#定义无线充电服务端
             while times < waittime:
                 time.sleep(1)  # 等待25秒
                 times += 1
-                if self.state.get_state() == "standby":
+                if WFState.get_battery_state() == "standby":
                     return "success"
             return result
         except Exception as e:
@@ -108,13 +111,12 @@ class WFCServerV2Sender():#定义无线充电服务端
             while times < waittime:
                 time.sleep(1)  # 等待25秒
                 times += 1
-                if self.state.get_state() == "takeoff":
+                if WFState.get_battery_state() == "takeoff":
                     return "success"
             return result
         except Exception as e:
             self.logger.get_log().info(f"TakeOff--开机命令异常，{e}")
             return 'error'
-
 
     def droneoff(self):
         """
@@ -133,14 +135,14 @@ class WFCServerV2Sender():#定义无线充电服务端
             while times < waittime:
                 time.sleep(1)  # 等待25秒
                 times += 1
-                if self.state.get_state() == "close":
+                if WFState.get_battery_state() == "close":
                     return "success"
             return result
         except Exception as e:
             self.logger.get_log().info(f"DroneOff--关机指令异常，{e}")
             return 'error'
 
-    def check(self):#状态读取,需要创建线程读取状态，每60秒检测一次，主要为检测无人机是否关机
+    def check(self):  # 状态读取,需要创建线程读取状态，每60秒检测一次，主要为检测无人机是否关机
         try:
             result = "success"
             waittime = 1
@@ -155,18 +157,19 @@ class WFCServerV2Sender():#定义无线充电服务端
             self.logger.get_log().info(f"待机命令异常，{e}")
             return 'error'
 
-    def check_thread(self):#check线程启动
+    def check_thread(self):  # check线程启动
         while True:
             self.check()
-            time.sleep(90)#等待90秒
+            time.sleep(90)  # 等待90秒
 
-if __name__=="__main__":
-    state=WFState()#创建对象
-    logger=Logger(__name__)#日志记录
+
+if __name__ == "__main__":
+    state = WFState()  # 创建对象
+    logger = Logger(__name__)  # 日志记录
     # WFC=WFCServerV2(state,logger)
     # WFC.operator_charge("DroneOff")
 
-    #Standby 错误指令：Connect Error
-    #Charge---，返回结果：Vrec Range Error!
-    #Charge Order Received
-    #Vrec Range Error!
+    # Standby 错误指令：Connect Error
+    # Charge---，返回结果：Vrec Range Error!
+    # Charge Order Received
+    # Vrec Range Error!

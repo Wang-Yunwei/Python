@@ -11,15 +11,21 @@ from threading import Thread
 from paho.mqtt import client as mqtt_client
 
 import BASEUtile.InitFileTool
-from BASEUtile import HangerState
+import BASEUtile.HangarState as HangarState
+import WFCharge.WFState as WFState
 from BASEUtile.logger import Logger
+import BASEUtile.OperateUtil as OperateUtil
+from ServerManager.websockets import WebSocketUtil
 
-logger = Logger(__name__)  # 日志记录
+# logger = Logger(__name__)  # 日志记录
 
-ini_serialNumber = BASEUtile.InitFileTool.get_str_value("hubeidianli_info", "serialNumber")
+# ini_serialNumber = BASEUtile.InitFileTool.get_str_value("hubeidianli_info", "serialNumber")
+ini_serialNumber = BASEUtile.InitFileTool.get_str_value("mqtt_info", "client_id")
 
 # 操控系统下发命令主题(通配表达式#会多捕获自己的应答，所以采用元组方式)
 topic_subscribe_list = [
+    (f"/api/machine/nest/private_handle_{ini_serialNumber}", 2),  # 自定义 私有手柄开关控制订阅主题
+    # (f"/api/machine/requestResult_{ini_serialNumber}", 2),  # 应答测试
     # (f"/api/machine/nest/information_{ini_serialNumber}", 2),  # 1.2.1 机巢基础信息 # 上报无需订阅
     # (f"/api/machine/nest/info_{ini_serialNumber}", 2),  # 1.2.2 机巢状态信息
     # (f"/api/machine/nest/env/info_{ini_serialNumber}", 2),  # 1.2.3 机巢环境信息
@@ -32,8 +38,12 @@ topic_subscribe_list = [
 client_id = 'jiku-001'  # 客户端id
 
 client_publish = None  # 用于推送消息的客户端
-webclient = None  # websocket推送线程
-hangstate = None  # 机库状态信息
+webclient: WebSocketUtil = None  # websocket推送线程
+# hangstate = HangarState  # 机库状态信息
+logger = None  # 日志对象
+
+airconditionStatus_test = 1
+uavLightStatus_test = 1  # 0开启 1关闭
 
 '''
 关于qos设置，考虑我们场景，应该统一为2
@@ -55,7 +65,7 @@ def connect_mqtt() -> mqtt_client:
             global client_publish
             client_publish = client  # 设置全局链接，用于下发消息
             subscribe(client)  # 注册订阅消息
-            do_code_information()  # 注册成功时自动发送机库信息
+            # do_code_information()  # 注册成功时自动发送机库信息
 
         else:
             logger.get_log().info(f"[MQTT]链接 MQTT 失败！, 错误码: {rc}  错误信息: {rc_status[rc]}")
@@ -63,24 +73,37 @@ def connect_mqtt() -> mqtt_client:
     def on_connect_fail(client, userdata):
         logger.get_log().error("[MQTT] 链接已断开，重连失败!")
 
+    # def on_disconnect(client, userdata, rc):
+    #     logger.get_log().error(f"[on_disconnect]已经断开连接:{rc}")
+    #     if rc != 0:
+    #         client.reconnect_delay_set(min_delay=10, max_delay=120)
+    #         client.reconnect()
+
     # 循环重新链接，直到连接上为止
     is_run = False
     while not is_run:
         try:
             # 从ini中读取运行配置信息
-            host_str = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost")
-            port_int = BASEUtile.InitFileTool.get_int_value("mqtt_edit_info", "mqttPort")
-            username = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName")
-            password = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            # host_str = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttHost")
+            # port_int = BASEUtile.InitFileTool.get_int_value("mqtt_edit_info", "mqttPort")
+            # username = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttUserName")
+            # password = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "mqttPassWord")
+            host_str = BASEUtile.InitFileTool.get_str_value("mqtt_info", "host_str")
+            port_int = BASEUtile.InitFileTool.get_int_value("mqtt_info", "port_int")
+            username = BASEUtile.InitFileTool.get_str_value("mqtt_info", "username_str")
+            password = BASEUtile.InitFileTool.get_str_value("mqtt_info", "password_str")
 
             global client_id
-            client_id = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber")
+            # client_id = BASEUtile.InitFileTool.get_str_value("mqtt_edit_info", "serialNumber")
+            client_id = BASEUtile.InitFileTool.get_str_value("mqtt_info", "client_id")
 
             logger.get_log().info(
                 f"[MQTT]启动创建MQTT链接，登录MTQQ服务器客户端ID:[{client_id}] 服务IP:[{host_str}] 服务POST:[{port_int}] 登录账户名:[{username}] 登录密码:[{password}] 订阅主题:[{topic_subscribe_list}]  ")
             client = mqtt_client.Client(client_id)
             client.on_connect = on_connect
             client.on_connect_fail = on_connect_fail
+            client.reconnect_delay_set(min_delay=10, max_delay=120)
+            # client.on_disconnect = on_disconnect
             # client.username_pw_set("admin", "password")
             client.username_pw_set(username, password)  # 账户密码
             # broker = 'broker.emqx.io'
@@ -110,13 +133,24 @@ def subscribe(client: mqtt_client):
             my_control_topic = f"/api/machine/nest/control_{ini_serialNumber}"
             my_time_topic = f"/api/machine/nest/time_{ini_serialNumber}"
             my_logControl_topic = f"/api/machine/nest/logControl_{ini_serialNumber}"
+            my_private_handle = f"/api/machine/nest/private_handle_{ini_serialNumber}"
 
             if msg_topic == my_control_topic:
-                do_code_control(msg_topic, message)
+                # do_code_control(msg_topic, message)
+                thread_do_code_control = Thread(target=do_code_control, args=([msg_topic, message]), daemon=True)
+                thread_do_code_control.start()
             elif msg_topic == my_time_topic:
-                do_code_time(msg_topic, message)
+                # do_code_time(msg_topic, message)
+                thread_do_code_time = Thread(target=do_code_time, args=([msg_topic, message]), daemon=True)
+                thread_do_code_time.start()
             elif msg_topic == my_logControl_topic:
-                do_code_log(msg_topic, message)
+                # do_code_log(msg_topic, message)
+                thread_do_code_log = Thread(target=do_code_log, args=([msg_topic, message]), daemon=True)
+                thread_do_code_log.start()
+            elif msg_topic == my_private_handle:
+                # do_code_log(msg_topic, message)
+                thread_do_private_handle = Thread(target=do_private_handle, args=([msg_topic, message]), daemon=True)
+                thread_do_private_handle.start()
             else:
                 logger.get_log().info(f"[MQTT] 订阅[{msg.topic}]不在处理业务范围内")
         except Exception as e:
@@ -132,14 +166,15 @@ def subscribe(client: mqtt_client):
 
 
 def publish(topic_publish, message):
-    logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
     global client_publish
-    if client_publish is None:
-        time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
-    logger.get_log().info(f"[MQTT][publish]执行下发消息:{message}")
-    result = client_publish.publish(topic_publish, message, qos=2)
-    status = result[0]
-    logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
+    if client_publish is not None:
+        # logger.get_log().info(f"[MQTT][publish]准备下发消息内容为:{message}")
+        # time.sleep(10)  # 正常走不到这个流程里，正常会有链接对象，等待10秒怎么也链接上了
+        logger.get_log().info(f"[MQTT][publish]执行下发消息,主题：{topic_publish},消息:{message}")
+        result = client_publish.publish(topic_publish, message, qos=0)
+        status = result[0]
+        logger.get_log().info(f"[MQTT][publish]执行下发消息后收到应答码:{status}  含义:{rc_status[status]}")
+        return status
 
 
 def publish_debug_log(topic_publish, message):
@@ -209,12 +244,14 @@ def run_alarm():
             time.sleep(10)  # 异常后晚10秒启动推送，给MQTT链接创造时间
 
 
-def start_mqtt_thread_hubeidianli(web_client, hang_state):
-    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
+def start_mqtt_thread_hubeidianli(web_client, logger_in):
+    global logger
+    logger = logger_in
     global webclient
     webclient = web_client
-    global hangstate
-    hangstate = hang_state
+    # global hangstate
+    # hangstate = hang_state
+    logger.get_log().info("[MQTT] 启动 MQTT 任务线程 [开始]")
     # print(f"hangstate.getHangerState={hangstate.getHangerState()}")
     # print(f"hangstate.get_state_dict()={hangstate.get_state_dict()}")
     thread = Thread(target=run, args=([]), daemon=True)
@@ -283,22 +320,24 @@ def do_code_info():
     topic_publish = f"/api/machine/nest/info_{ini_serialNumber}"  # 1.2.2 机巢状态信息
     tid = uuid.uuid4()
 
-    cabinDoorStatus_result = hangstate.get_hanger_door()
+    cabinDoorStatus_result = HangarState.get_hangar_door_state()
     cabinDoorStatus = 2  # 2: 舱门关闭
     if cabinDoorStatus_result == "open":
         cabinDoorStatus = 1  # 1: 舱门开启
 
-    clampStatus_result = hangstate.get_hanger_bar()
+    clampStatus_result = HangarState.get_hangar_bar_state()
     clampStatus = 1  # 1: 夹紧器夹紧
     if clampStatus_result == "open":
         clampStatus = 2  # 2: 夹紧器打开
 
-    airconditionStatus_result = hangstate.get_air_condition()
-    airconditionStatus = 2  # 2: 空调关闭
-    if airconditionStatus_result == "open":
-        airconditionStatus = 1  # 1: 空调打开
+    global airconditionStatus_test
+    airconditionStatus = airconditionStatus_test
+    # airconditionStatus_result = hangstate.get_air_condition()
+    # airconditionStatus = 2  # 2: 空调关闭
+    # if airconditionStatus_result == "open":
+    #     airconditionStatus = 1  # 1: 空调打开
 
-    chargerStatus_result = hangstate.get_wfcstate()
+    chargerStatus_result = WFState.get_battery_state()
     chargerStatus = 2  # 2: 无人机充电关闭
     if chargerStatus_result == "charging":
         chargerStatus = 1  # 1: 无人机充电打开
@@ -314,10 +353,12 @@ def do_code_info():
     else:
         UAVStatus = 0  # 0: 未知
 
-    uavLightStatus_result = hangstate.get_night_light_state()
-    uavLightStatus = 0  # 0: 开启
-    if uavLightStatus_result == "close":
-        uavLightStatus = 1  # 1: 关闭
+    global uavLightStatus_test
+    uavLightStatus = uavLightStatus_test
+    # uavLightStatus_result = hangstate.get_night_light_state()
+    # uavLightStatus = 0  # 0: 开启
+    # if uavLightStatus_result == "close":
+    #     uavLightStatus = 1  # 1: 关闭
 
     result_message = {
         "key": f"{ini_serialNumber}",
@@ -341,13 +382,13 @@ def do_code_env_info():
     topic_publish = f"/api/machine/nest/env/info_{ini_serialNumber}"  # 1.2.3 机巢环境信息
     tid = uuid.uuid4()
 
-    externalWindPower_str = hangstate.get_windspeed()
+    externalWindPower_str = HangarState.get_wind_speed_value()
     externalWindPower = 0.0
     if externalWindPower_str is not None:
         externalWindPower = float(externalWindPower_str)
         externalWindPower = externalWindPower + 1.1  # TODO 检测值 追加1.1
 
-    externalWindDirection_result = hangstate.get_winddirection()
+    externalWindDirection_result = HangarState.get_wind_direction_value()
     if externalWindDirection_result == "北风":
         externalWindDirection = 1
     elif externalWindDirection_result == "东北风":
@@ -369,8 +410,8 @@ def do_code_env_info():
     else:
         externalWindDirection = 1  # 默认北风
 
-    interiorHumidity = hangstate.get_indoor_hum()  # 机库内湿度
-    interiorAirTemperature = hangstate.get_indoor_tem()  # 机库内温度
+    interiorHumidity = HangarState.get_indoor_hum_value()  # 机库内湿度
+    interiorAirTemperature = HangarState.get_indoor_tem_value()  # 机库内温度
 
     result_message = {
         "key": f"{ini_serialNumber}",
@@ -422,6 +463,8 @@ def do_code_control(msg_topic, message):
         "result": True
     }
     params = json.loads(message)
+    global airconditionStatus_test
+    global uavLightStatus_test
     if "key" in params and "tid" in params and "type" in params and "parameter" in params:
         key = params["key"]
         tid = params["tid"]
@@ -431,18 +474,27 @@ def do_code_control(msg_topic, message):
         if key != ini_serialNumber:
             logger.get_log().info(f"[MQTT]control接入的设备ID[{key}]与本地设备ID[{ini_serialNumber}]不一致，不处理")
             return
+        # TODO 检测流程特有
+        # if key is not None:
+        #     result_json = json.dumps(result_message, ensure_ascii=False)
+        #     publish(topic_publish, result_json)
+        #     return
         logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][开始]")
+        result_json = json.dumps(result_message, ensure_ascii=False)
+        mqtt_back_code = publish(topic_publish, result_json)
+        logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][BackMsg][{mqtt_back_code}]")
+        # time.sleep(30)
         if type == 1:  # 1: 舱门控制
             if parameter == 0:  # 无操作
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 1:  # 打开
-                result = webclient.step_scene_door_open_140000()
+                result = OperateUtil.operate_hangar("140000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "打开舱门失败"
                     result_message["result"] = False
             elif parameter == 2:  # 关闭
-                result = webclient.step_scene_door_close_150000()
+                result = OperateUtil.operate_hangar("150000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "关闭舱门失败"
@@ -472,19 +524,19 @@ def do_code_control(msg_topic, message):
             if parameter == 0:  # 无操作
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 1:  # 展开
-                result = webclient.step_scene_bar_reset_500000()
+                result = OperateUtil.operate_hangar("500000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "归中机构展开失败"
                     result_message["result"] = False
             elif parameter == 2:  # 归中
-                result = webclient.step_scene_bar_close_2e10002000()
+                result = OperateUtil.operate_hangar("2e10002000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "归中机构归中失败"
                     result_message["result"] = False
             elif parameter == 3:  # 复位
-                result = webclient.step_scene_bar_reset_500000()
+                result = OperateUtil.operate_hangar("500000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "归中机构复位失败"
@@ -498,13 +550,13 @@ def do_code_control(msg_topic, message):
             if parameter == 0:  # 无操作
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 1:  # 开启
-                result = webclient.step_scene_drone_takeoff_dt0000()
+                result = OperateUtil.operate_hangar("dt0000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "无人机开机失败"
                     result_message["result"] = False
             elif parameter == 2:  # 关闭
-                result = webclient.step_scene_drone_off_dd0000()
+                result = OperateUtil.operate_hangar("dd0000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "无人机关机失败"
@@ -530,13 +582,13 @@ def do_code_control(msg_topic, message):
             if parameter == 0:  # 无操作
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 1:  # 开启
-                result = webclient.step_scene_drone_charge_cp0000()
+                result = OperateUtil.operate_hangar("cp0000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "无人机开启充电失败"
                     result_message["result"] = False
             elif parameter == 2:  # 关闭
-                result = webclient.step_scene_drone_standby_sb0000()
+                result = OperateUtil.operate_hangar("sb0000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "无人机关闭充电失败"
@@ -550,13 +602,15 @@ def do_code_control(msg_topic, message):
             if parameter == 0:  # 无操作
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 1:  # 开启
-                result = webclient.step_scene_air_open_300000()
+                airconditionStatus_test = 1
+                result = OperateUtil.operate_hangar("300000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "空调开启失败"
                     result_message["result"] = False
             elif parameter == 2:  # 关闭
-                result = webclient.step_scene_air_close_310000()
+                airconditionStatus_test = 2
+                result = OperateUtil.operate_hangar("310000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "空调关闭失败"
@@ -571,13 +625,15 @@ def do_code_control(msg_topic, message):
             if parameter == 0:  # 无操作
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 1:  # 开启
-                result = webclient.step_scene_open_light()
+                uavLightStatus_test = 0
+                result = OperateUtil.operate_hangar("400000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "照明开启失败"
                     result_message["result"] = False
             elif parameter == 2:  # 关闭
-                result = webclient.step_scene_close_light()
+                uavLightStatus_test = 1
+                result = OperateUtil.operate_hangar("410000")
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
                 if not result.endswith("0"):
                     result_message["message"] = "照明关闭失败"
@@ -591,9 +647,19 @@ def do_code_control(msg_topic, message):
             if parameter == 0:  # 无操作
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 1:  # 一键打开
-                logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
+                # logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
+                result = OperateUtil.operate_hangar("A000")
+                logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
+                if not result.endswith("0"):
+                    result_message["message"] = "一键打开失败"
+                    result_message["result"] = False
             elif parameter == 2:  # 一键回收
-                logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
+                # logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
+                result = OperateUtil.operate_hangar("B100")
+                logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
+                if not result.endswith("0"):
+                    result_message["message"] = "一键回收失败"
+                    result_message["result"] = False
             elif parameter == 3:  # 一键重置
                 logger.get_log().info(f"[MQTT]执行[{type}_{parameter}][无需操作]")
             elif parameter == 4:  # 急停复位
@@ -604,8 +670,8 @@ def do_code_control(msg_topic, message):
         else:
             result_message["message"] = "不支持的type值"
             result_message["result"] = False
-        result_json = json.dumps(result_message, ensure_ascii=False)
-        publish(topic_publish, result_json)
+        # result_json = json.dumps(result_message, ensure_ascii=False)
+        # publish(topic_publish, result_json)
     else:
         logger.get_log().info(f"[MQTT]非法结构，不处理")
 
@@ -647,6 +713,58 @@ def do_code_time(msg_topic, message):
         logger.get_log().info(f"[MQTT]非法结构，不处理")
 
 
+def do_private_handle(msg_topic, message):
+    topic_subscribe = f"/api/machine/nest/private_handle_{ini_serialNumber}"
+    topic_publish = f"/api/machine/private_requestResult_{ini_serialNumber}"
+    if msg_topic != topic_subscribe:
+        logger.get_log().info(f"[MQTT]control的处理订阅[{topic_subscribe}]与接入订阅[{msg_topic}]不一致，不处理")
+        return
+    result_message = {
+        "key": f"{ini_serialNumber}",
+        "tid": "",
+        "api": f"/api/machine/nest/private_handle_{ini_serialNumber}",
+        "message": "ok",
+        "result": True
+    }
+    params = json.loads(message)
+    if "key" in params and "tid" in params and "type" in params and "parameter" in params:
+        key = params["key"]
+        tid = params["tid"]
+        type = params["type"]
+        parameter = params["parameter"]
+        result_message["tid"] = tid  # 初始化应答tid
+        if key != ini_serialNumber:
+            logger.get_log().info(f"[MQTT]private_handle接入的设备ID[{key}]与本地设备ID[{ini_serialNumber}]不一致，不处理")
+            return
+
+        if type == 1:  # 1: 手柄
+            if parameter == 0:  # 无操作
+                logger.get_log().info(f"[MQTT][private_handle]执行[{type}_{parameter}][无需操作]")
+            elif parameter == 1:  # 打开
+                result = OperateUtil.operate_hangar("h00000")
+                logger.get_log().info(f"[MQTT][private_handle]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
+                if not result.endswith("0"):
+                    result_message["message"] = "打开手柄失败"
+                    result_message["result"] = False
+            elif parameter == 2:  # 关闭
+                result = OperateUtil.operate_hangar("h10000")
+                logger.get_log().info(f"[MQTT][private_handle]执行[{type}_{parameter}][结束]底层下位机接口应答结果[{result}]")
+                if not result.endswith("0"):
+                    result_message["message"] = "关闭手柄失败"
+                    result_message["result"] = False
+            else:
+                logger.get_log().info(f"[MQTT][private_handle]执行[{type}_{parameter}][不存在，无需操作]")
+                return
+        else:
+            result_message["message"] = "不支持的type值"
+            result_message["result"] = False
+
+        result_json = json.dumps(result_message, ensure_ascii=False)
+        publish(topic_publish, result_json)
+    else:
+        logger.get_log().info(f"[MQTT]非法结构，不处理")
+
+
 def do_code_log(msg_topic, message):
     topic_subscribe = f"/api/machine/nest/logControl_{ini_serialNumber}"
     topic_publish = f"/api/machine/requestResult_{ini_serialNumber}"
@@ -673,36 +791,37 @@ def do_code_log(msg_topic, message):
         if key != ini_serialNumber:
             logger.get_log().info(f"[MQTT]control_log接入的设备ID[{key}]与本地设备ID[{ini_serialNumber}]不一致，不处理")
             return
-        # TODO url改为配置死的，目前不判断url参数
-        # if url is None:
-        #     logger.get_log().info(f"[MQTT]control_log参数url为空")
-        #     return
+        # url校验
+        if url is None:
+            logger.get_log().info(f"[MQTT]control_log参数url为空")
+            return
 
         # TODO 检测期间目前不处理正式日志
-        # if type == 1:
-        #     logger.get_log().info(f"[MQTT]control_log不处理无人机日志")
-        #     return
-        # elif type == 2:  # 机巢的日志
-        #     logger.get_log().info(f"[MQTT]control_log处理机巢日志[开始]")
-        #     try:
-        #         filelist = logger.getLogFiles(starttime=startDate, endtime=endDate)
-        #         # 这块异步处理还是同步处理接口文档没确认
-        #         # thread_log_post = Thread(target=do_code_log_post, args=([filelist,tid ,url]), daemon=True)
-        #         # thread_log_post.start()
-        #         do_code_log_post(filelist, tid, url)
-        #     except Exception as e:
-        #         logger.get_log().error(f"[MQTT]control_log处理机巢日志发生异常:{e}")
-        #         result_message["message"] = "文件获取失败"
-        #         result_message["result"] = False
-        #
-        #     result_json = json.dumps(result_message, ensure_ascii=False)
-        #     publish(topic_publish, result_json)
-        # else:
-        #     logger.get_log().info(f"[MQTT]control_log不处理其他机日志")
-        #     return
-        do_code_log_post_test(tid, type)
-        result_json = json.dumps(result_message, ensure_ascii=False)
-        publish(topic_publish, result_json)
+        if type == 1:
+            logger.get_log().info(f"[MQTT]control_log不处理无人机日志")
+            return
+        elif type == 2:  # 机巢的日志
+            logger.get_log().info(f"[MQTT]control_log处理机巢日志[开始]")
+            try:
+                filelist = logger.getLogFiles(starttime=startDate, endtime=endDate)
+                # 这块异步处理还是同步处理接口文档没确认
+                # thread_log_post = Thread(target=do_code_log_post, args=([filelist,tid ,url]), daemon=True)
+                # thread_log_post.start()
+                do_code_log_post(filelist, tid, url)
+            except Exception as e:
+                logger.get_log().error(f"[MQTT]control_log处理机巢日志发生异常:{e}")
+                result_message["message"] = "文件获取失败"
+                result_message["result"] = False
+            # 需要处理时返回处理应答
+            result_json = json.dumps(result_message, ensure_ascii=False)
+            publish(topic_publish, result_json)
+        else:
+            logger.get_log().info(f"[MQTT]control_log不处理其他机日志")
+            return
+        # 测试验证用的功能，只测试时使用
+        # do_code_log_post_test(tid, type)
+        # result_json = json.dumps(result_message, ensure_ascii=False)
+        # publish(topic_publish, result_json)
     else:
         logger.get_log().info(f"[MQTT]非法结构，不处理")
 
@@ -717,13 +836,13 @@ def do_code_log_post_test(tid, type):
     url = BASEUtile.InitFileTool.get_str_value("hubeidianli_info", "do_log_test_url")
     try:
         if type == 1:  # 无人机
-            with open(r"E:\python_jk_mqtt\JIKUPI\testlog\log_1.txt", 'rb') as file:  # 二进制方式打开
+            with open(r"/home/wkzn/JIKUPI/testlog/log_1.txt", 'rb') as file:  # 二进制方式打开
                 up_files = {'logFile': file}
                 request_obj["type"] = 1
                 r = requests.post(url, data=request_obj, files=up_files)
                 logger.get_log().info(f"[MQTT]control_log[检测]执行http上传日志 应答信息={r.text}")
         elif type == 2:  # 机巢的日志
-            with open(r"E:\python_jk_mqtt\JIKUPI\testlog\log_2.txt", 'rb') as file:  # 二进制方式打开
+            with open(r"/home/wkzn/JIKUPI/testlog/log_2.txt", 'rb') as file:  # 二进制方式打开
                 up_files = {'logFile': file}
                 r = requests.post(url, data=request_obj, files=up_files)
                 logger.get_log().info(f"[MQTT]control_log[检测]执行http上传日志 应答信息={r.text}")
@@ -741,21 +860,22 @@ def do_code_log_post(filelist, tid, url):
             request_obj = {
                 "key": f"{ini_serialNumber}",
                 "tid": tid,
-                "logFile": "",
                 "type": 2
             }
             # with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:  # 文本方式打开
             with open(file_path, 'rb') as file:  # 二进制方式打开
-                # 读取文件内容
-                content = file.read()
-                # print(f"file_path=[{file_path}][{content}]")
-                base64_string = base64.b64encode(content).decode('utf-8')
-                # print(f"file_path=[{file_path}][{base64_string}]")
-                request_obj["logFile"] = base64_string
-                json_str = json.dumps(request_obj)
-                # logger.get_log().debug(f"[MQTT]control_log url={url} json_str={json_str}")  # 临时放开为info级别日志 改回debug
-                r = requests.post(url, data=json_str,
-                                  headers={"Content-Type": "application/json"})
+                # # 读取文件内容
+                # content = file.read()
+                # # print(f"file_path=[{file_path}][{content}]")
+                # base64_string = base64.b64encode(content).decode('utf-8')
+                # # print(f"file_path=[{file_path}][{base64_string}]")
+                # request_obj["logFile"] = base64_string
+                # json_str = json.dumps(request_obj)
+                # # logger.get_log().debug(f"[MQTT]control_log url={url} json_str={json_str}")  # 临时放开为info级别日志 改回debug
+                # r = requests.post(url, data=json_str,
+                #                   headers={"Content-Type": "application/json"})
+                up_files = {'logFile': file}
+                r = requests.post(url, data=request_obj, files=up_files)
                 logger.get_log().info(f"postToHzPush 应答信息={r.text}")
         except Exception as e:
             logger.get_log().error(f"[MQTT]control_log处理机巢日志[{file_path}]发生异常：{e}")
@@ -798,25 +918,27 @@ def do_code_xxxx(msg_topic, msgCode):
 
 
 if __name__ == '__main__':
-    # run()
-    logger.get_log().info("====1")
-    start_mqtt_thread_hubeidianli(None, None)
-    logger.get_log().info("====2")
+    pass
+    # logger = Logger(__name__)  # 日志记录
+    # # run()
+    # logger.get_log().info("====1")
+    # start_mqtt_thread_hubeidianli(None, logger)
+    # logger.get_log().info("====2")
     # time.sleep(5)
 
     # filelist = logger.getLogFiles(starttime="2024-01-01", endtime="2024-05-01")
     # logger.get_log().info(f"filelist = {filelist}")
 
-    test_message_log = {
-        "key": ini_serialNumber,
-        "tid": "123456",
-        "type": 2,
-        "url": "http://127.0.0.1:4523/m1/1148311-0-default/uplog",
-        "startDate": "2024-01-01",
-        "endDate": "2024-05-01"
-    }
-    publish(f"/api/machine/nest/logControl_{ini_serialNumber}", json.dumps(test_message_log))
-    time.sleep(600)
+    # test_message_log = {
+    #     "key": ini_serialNumber,
+    #     "tid": "123456",
+    #     "type": 2,
+    #     "url": "http://127.0.0.1:4523/m1/1148311-0-default/uplog",
+    #     "startDate": "2024-01-01",
+    #     "endDate": "2024-05-01"
+    # }
+    # publish(f"/api/machine/nest/logControl_{ini_serialNumber}", json.dumps(test_message_log))
+    # time.sleep(600)
     # publish(f"uavshelter/devicecontral/{ini_serialNumber}", "ha")
 
     # test_message1 = {
@@ -832,6 +954,16 @@ if __name__ == '__main__':
         "type": 1,
         "parameter": 0
     }
+    test_message["type"] = 1
+    test_message["parameter"] = 1
+    publish(f"/api/machine/nest/private_handle_{ini_serialNumber}", json.dumps(test_message))
+    time.sleep(600)
+
+    test_message["type"] = 4
+    test_message["parameter"] = 1
+    publish(f"/api/machine/nest/control_{ini_serialNumber}", json.dumps(test_message))
+    time.sleep(600)
+
     publish(f"/api/machine/nest/control_{ini_serialNumber}", json.dumps(test_message))
     time.sleep(60)
     test_message["parameter"] = 1

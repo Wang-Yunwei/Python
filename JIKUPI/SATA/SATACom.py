@@ -11,13 +11,13 @@
 '''
 import time
 
-from BASEUtile.HangerState import HangerState
+import BASEUtile.HangarState as HangarState
 from BASEUtile.logger import Logger
 import serial
 import serial.tools.list_ports
 
 
-class Communication():
+class Communication:
     # 初始化
     def __init__(self, com, bps, timeout, logger, parity):
         self.port = com  # 串口类型 ser=serial.Serial("/dev/ttyUSB0",9600,timeout=0.5) #使用USB连接串行口，比特率，连接超时时间（单位为秒）
@@ -143,12 +143,12 @@ class Communication():
 
 
 class JKSATACOM():
-    def __init__(self, hanger_state, device_info, bps, timeout, logger, parity):
+    def __init__(self, device_info, bps, timeout, logger, parity):
         '''
         :param hanger_state: 机库的状态对象实例
         '''
         self.logger = logger
-        self.hanger_state = hanger_state
+        # self.hanger_state = hanger_state
         self.engine = Communication(device_info, bps, timeout, self.logger, parity)  # 5秒超时
 
     def operator_hanger(self, commond):
@@ -229,18 +229,16 @@ class JKSATACOM():
                     print(f"{ex}")
                     return 'error'
             if result == "":
-                self.hanger_state.set_STAT_connet_state('error')
+                HangarState.set_stat_connect_state('error')
                 self.engine.Close_Engine()  # 关闭当前连接
                 self.logger.get_log().error(f"控制板返回参数为空，串口连接超时")
                 return '90119021'  # 第一块板子和第二块板子异常’
             else:
-                self.hanger_state.set_STAT_connet_state('open')  # 串口连接正常
+                HangarState.set_stat_connect_state('open')  # 串口连接正常
         else:
-            self.hanger_state.set_STAT_connet_state('open')  # 串口连接正常
-        if commond.startswith("03"):#下位机版本号
-            return result
+            HangarState.set_stat_connect_state('open')  # 串口连接正常
         if not result[0] == '9':  # 下位机返回结果不正确
-            self.logger.get_log().error(f"下位机返回参数不正确，不是以9 or V开头，当前返回值为{result}")
+            self.logger.get_log().error(f"下位机返回参数不正确，不是以9开头，当前返回值为{result}")
             self.engine.Close_Engine()  # 关闭当前连接
             return 'error'
         else:
@@ -255,141 +253,141 @@ class JKSATACOM():
             if type_num == '0':  # 连接状态
                 if type_state_num == '0':  # 第一块板子
                     if result_num == '0':
-                        self.hanger_state.set_STAT_connet_state('open')  # 第一块板子串口连接正常
+                        HangarState.set_stat_connect_state('open')  # 第一块板子串口连接正常
                         return_number = '9000'
                     else:
-                        self.hanger_state.set_STAT_connet_state('error')  # 第一块板子串口连接异常
+                        HangarState.set_stat_connect_state('error')  # 第一块板子串口连接异常
                         return_number = '9001'
 
                 else:  # 第二块板子
                     if result_num == '0':
-                        self.hanger_state.set_STAT_connet_state('open')  # 第二块板子串口连接正常
+                        HangarState.set_stat_connect_state('open')  # 第二块板子串口连接正常
                         return_number = '9010'
                     else:
-                        self.hanger_state.set_STAT_connet_state('error')  # 第二块板子串口连接异常
+                        HangarState.set_stat_connect_state('error')  # 第二块板子串口连接异常
                         return_number = '9011'
             elif type_num == '1':  # 机库门操作
                 if type_state_num == '0':  # #左机库门开操作
                     if result_num == '0':  # 机库门打开操作正常
-                        self.hanger_state.set_hanger_door('open')  # 打开机库门操作正常
+                        HangarState.set_hangar_door_state('open')  # 打开机库门操作正常
                         return_number = '9100'
                     else:  # 机库门打开操作异常
-                        self.hanger_state.set_hanger_door('error')  # 打开机库门操作异常
+                        HangarState.set_hangar_door_state('error')  # 打开机库门操作异常
                         return_number = '9101'
                 elif type_state_num == '1':  # #左机库门关闭库门操作
                     if result_num == '0':
-                        self.hanger_state.set_hanger_door('close')  # 关闭机库门操作正常
+                        HangarState.set_hangar_door_state('close')  # 关闭机库门操作正常
                         return_number = '9110'
                     else:
-                        self.hanger_state.set_hanger_door('error')  # 关闭机库门操作异常
+                        HangarState.set_hangar_door_state('error')  # 关闭机库门操作异常
                         return_number = '9111'
                 elif type_state_num == '2':  # 右机库门开操作
                     if result_num == '0':
-                        self.hanger_state.set_hanger_door('open')  # 关闭机库门操作正常
+                        HangarState.set_hangar_door_state('open')  # 关闭机库门操作正常
                         return_number = '9120'
                     else:
-                        self.hanger_state.set_hanger_door('error')  # 关闭机库门操作异常
+                        HangarState.set_hangar_door_state('error')  # 关闭机库门操作异常
                         return_number = '9121'
                 elif type_state_num == '3':  # #右机库门关闭库门操作
                     if result_num == '0':
-                        self.hanger_state.set_hanger_door('close')  # 关闭机库门操作正常
+                        HangarState.set_hangar_door_state('close')  # 关闭机库门操作正常
                         return_number = '9130'
                     else:
-                        self.hanger_state.set_hanger_door('error')  # 关闭机库门操作异常
+                        HangarState.set_hangar_door_state('error')  # 关闭机库门操作异常
                         return_number = '9131'
                 # ---------------同时操作----------------------------------
                 elif type_state_num == '4':  # #机库门同时打开操作
                     if result_num == '0':
-                        self.hanger_state.set_hanger_door('open')  # 打开机库门操作正常
+                        HangarState.set_hangar_door_state('open')  # 打开机库门操作正常
                         return_number = '9140'
                     else:
-                        self.hanger_state.set_hanger_door('error')  # 打开机库门操作异常
+                        HangarState.set_hangar_door_state('error')  # 打开机库门操作异常
                         return_number = '9141'
                 elif type_state_num == '5':  # #机库门同时关闭操作
                     if result_num == '0':
-                        self.hanger_state.set_hanger_door('close')  # 关闭机库门操作正常
+                        HangarState.set_hangar_door_state('close')  # 关闭机库门操作正常
                         return_number = '9150'
                     else:
-                        self.hanger_state.set_hanger_door('error')  # 关闭机库门操作异常
+                        HangarState.set_hangar_door_state('error')  # 关闭机库门操作异常
                         return_number = '9151'
             elif type_num == '2':  # 操作推拉杠
                 if type_state_num == 'a':  # 操作上下推拉杠--打开
                     if result_num == '0':
-                        self.hanger_state.set_hanger_td_bar('open')  # 上下推杆打开正常
+                        HangarState.set_hangar_td_bar_state('open')  # 上下推杆打开正常
                         return_number = '92a0'
                     else:
-                        self.hanger_state.set_hanger_td_bar('error')  # 上下推杆打开异常
+                        HangarState.set_hangar_td_bar_state('error')  # 上下推杆打开异常
                         return_number = '92a1'
                 elif type_state_num == 'b':  # # 操作上下推拉杠--关闭
                     if result_num == '0':
-                        self.hanger_state.set_hanger_td_bar('close')  # 上下推杆关闭正常
+                        HangarState.set_hangar_td_bar_state('close')  # 上下推杆关闭正常
                         return_number = '92b0'
                     else:
-                        self.hanger_state.set_hanger_td_bar('error')  # 上下推杆关闭异常
+                        HangarState.set_hangar_td_bar_state('error')  # 上下推杆关闭异常
                         return_number = '92b1'
                 elif type_state_num == 'c':  # # 操作左右推拉杠--打开
                     if result_num == '0':
-                        self.hanger_state.set_hanger_lr_bar('open')  # 左右推杆关闭正常
+                        HangarState.set_hangar_lr_bar_state('open')  # 左右推杆关闭正常
                         return_number = '92c0'
                     else:
-                        self.hanger_state.set_hanger_lr_bar('error')  # 左右推杆关闭异常
+                        HangarState.set_hangar_lr_bar_state('error')  # 左右推杆关闭异常
                         return_number = '92c1'
                 elif type_state_num == 'd':  # # 操作左右推拉杠--关闭
                     if result_num == '0':
-                        self.hanger_state.set_hanger_lr_bar('close')  # 左右推杆关闭正常
+                        HangarState.set_hangar_lr_bar_state('close')  # 左右推杆关闭正常
                         return_number = '92d0'
                     else:
-                        self.hanger_state.set_hanger_lr_bar('error')  # 左右推杆关闭异常
+                        HangarState.set_hangar_lr_bar_state('error')  # 左右推杆关闭异常
                         return_number = '92d1'
                 elif type_state_num == 'e':  # # 操作四个推拉杠--夹紧
                     if result_num == '0':
                         print(f"-----------------set bar close----")
-                        self.hanger_state.set_hanger_lr_bar('close')  # 左右推杆关闭正常
-                        self.hanger_state.set_hanger_td_bar('close')  # 上下推杆关闭正常
-                        self.hanger_state.set_hanger_bar('close')
+                        HangarState.set_hangar_lr_bar_state('close')  # 左右推杆关闭正常
+                        HangarState.set_hangar_td_bar_state('close')  # 上下推杆关闭正常
+                        HangarState.set_hangar_bar_state('close')
                         return_number = '92e0'
                     else:
-                        self.hanger_state.set_hanger_lr_bar('error')  # 左右推杆关闭异常
-                        self.hanger_state.set_hanger_td_bar('error')  # 上下推杆关闭异常
-                        self.hanger_state.set_hanger_bar('error')
+                        HangarState.set_hangar_lr_bar_state('error')  # 左右推杆关闭异常
+                        HangarState.set_hangar_td_bar_state('error')  # 上下推杆关闭异常
+                        HangarState.set_hangar_bar_state('error')
                         return_number = '92e1'
                 elif type_state_num == 'f':  # # 操作左右推拉杠--打开
                     if result_num == '0':
                         print(f"-----------------set bar open----")
-                        self.hanger_state.set_hanger_lr_bar('open')  # 左右推杆打开正常
-                        self.hanger_state.set_hanger_td_bar('open')  # 上下推杆打开正常
-                        self.hanger_state.set_hanger_bar('open')
+                        HangarState.set_hangar_lr_bar_state('open')  # 左右推杆打开正常
+                        HangarState.set_hangar_td_bar_state('open')  # 上下推杆打开正常
+                        HangarState.set_hangar_bar_state('open')
                         return_number = '92f0'
                     else:
-                        self.hanger_state.set_hanger_lr_bar('error')  # 左右推杆打开异常
-                        self.hanger_state.set_hanger_td_bar('error')  # 上下推杆打开异常
-                        self.hanger_state.set_hanger_bar('error')
+                        HangarState.set_hangar_lr_bar_state('error')  # 左右推杆打开异常
+                        HangarState.set_hangar_td_bar_state('error')  # 上下推杆打开异常
+                        HangarState.set_hangar_bar_state('error')
                         return_number = '92f1'
             elif type_num == '3':  # 操作空调
                 if type_state_num == '0':  # 空调打开
                     if result_num == '0':
-                        self.hanger_state.set_air_condition('open')  # 空调打开正常
+                        HangarState.set_air_condition_state('open')  # 空调打开正常
                         return_number = '9300'
                     else:
-                        self.hanger_state.set_air_condition('error')  # 空调打开异常
+                        HangarState.set_air_condition_state('error')  # 空调打开异常
                         return_number = '9301'
                 elif type_state_num == '1':  # 空调关闭
                     if result_num == '0':
-                        self.hanger_state.set_air_condition('close')  # 空调关闭正常
+                        HangarState.set_air_condition_state('close')  # 空调关闭正常
                         return_number = '9310'
                     else:
-                        self.hanger_state.set_air_condition('error')  # 空调关闭异常
+                        HangarState.set_air_condition_state('error')  # 空调关闭异常
                         return_number = '9311'
             elif type_num == '4':  # 操作无人机手柄（20221203改为操作夜灯）
-                if self.hanger_state.get_night_light_state() == "close" or self.hanger_state.get_night_light_state() == "error":
-                    self.hanger_state.set_night_light_state("open")  # 20221203改为设置夜灯
+                if HangarState.get_night_light_state() == "close" or HangarState.get_night_light_state() == "error":
+                    HangarState.set_night_light_state("open")  # 20221203改为设置夜灯
                 else:
-                    self.hanger_state.set_night_light_state("close")  # 20221203改为设置夜灯
+                    HangarState.set_night_light_state("close")  # 20221203改为设置夜灯
                 return_number = result
             elif type_num == '5':  # 推杆复位操作
-                self.hanger_state.set_hanger_lr_bar('open')  # 左右推杆打开正常
-                self.hanger_state.set_hanger_td_bar('open')  # 上下推杆打开正常
-                self.hanger_state.set_hanger_bar('open')
+                HangarState.set_hangar_lr_bar_state('open')  # 左右推杆打开正常
+                HangarState.set_hangar_td_bar_state('open')  # 上下推杆打开正常
+                HangarState.set_hangar_bar_state('open')
                 return_number = result
 
         self.engine.Close_Engine()
@@ -404,15 +402,16 @@ if __name__ == "__main__":
     # statCom = JKSATACOM(hangstate, device_info, bps, timeout,0)
     # result=statCom.operator_hanger(commond='2b0000\r\n')
     # print(f"OK , the result is {result}")
-    device_info = "/dev//dev/ttyUSBCharge"
-    bps = 9600
-    timeout = 20
-    logger = Logger(__name__)  # 日志记录
-    comm = Communication(device_info, bps, timeout, logger, None)
-    comm.Open_Engine()  # 打开串口
-    command_read = "01 04 00 00 00 06 70 08"
-    comm.Send_data(bytes.fromhex(command_read))
-    print(comm.read_lines(1))
+    pass
+    # device_info = "/dev//dev/ttyUSBCharge"
+    # bps = 9600
+    # timeout = 20
+    # logger = Logger(__name__)  # 日志记录
+    # comm = Communication(device_info, bps, timeout, logger, None)
+    # comm.Open_Engine()  # 打开串口
+    # command_read = "01 04 00 00 00 06 70 08"
+    # comm.Send_data(bytes.fromhex(command_read))
+    # print(comm.read_lines(1))
 
     # statCom = Communication(com="/dev/ttyUSB0", bps=115200, timeout=5)
     # comm=Communication(com="/dev/ttyUSB0", bps=115200, timeout=5)

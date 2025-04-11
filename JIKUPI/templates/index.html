@@ -16,7 +16,7 @@
 
   <div class="container mt-3">
      <div class="h3">
-      <span>版本发布日期：2024-05-09</span>
+      <span>版本发布日期：2024-10-29</span>
       <span style="margin-left:20px;">下位机版本号：{{down_version}}</span>
       <span style="margin-left:20px;">系统用户：{{username}}</span>
 
@@ -32,7 +32,7 @@
 
 
     <form action="/save" method="post">
-      <div class="input-group mb-3">
+      {#<div class="input-group mb-3">
         <div class="h4">服务器IP地址</div>
         {% if ipaddress %}
         <input type="text" class="form-control" placeholder="请输入服务器IP地址" id="server_ip" name="server_ip" value="{{ipaddress}}">
@@ -50,7 +50,7 @@
         <input type="text" class="form-control" placeholder="请输入服务器端口号" id="socket" name="socket">
         {% endif %}
 
-      </div>
+      </div>#}
 
       <div class="input-group mb-3">
         <div class="h4">站点id值</div>
@@ -67,6 +67,12 @@
         <input type="text" class="form-control" placeholder="请输入websocket完整地址" id="web_socket_url" name="web_socket_url" value="{{web_socket_url}}">
         {% else %}
         <input type="text" class="form-control" placeholder="请输入websocket完整地址" id="web_socket_url" name="web_socket_url">
+        {% endif %}
+        <div class="h4">websocket心跳(秒)</div>
+        {% if web_socket_heart %}
+        <input type="text" class="form-control" placeholder="请输入websocket心跳间隔" id="web_socket_heart" name="web_socket_heart" value="{{web_socket_heart}}">
+        {% else %}
+        <input type="text" class="form-control" placeholder="请输入websocket心跳间隔" id="web_socket_heart" name="web_socket_heart">
         {% endif %}
       </div>
       <div style="text-align:center">
